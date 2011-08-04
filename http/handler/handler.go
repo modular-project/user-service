@@ -29,6 +29,12 @@ func createResponse(message string) map[string]interface{} {
 	}
 }
 
+func responseID(id uint64) map[string]interface{} {
+	return map[string]interface{}{
+		"id": id,
+	}
+}
+
 func getUserIDFromContext(c echo.Context) (uint, error) {
 	token := c.Get("token").(jwt.JWT)
 	data := token.Public()
@@ -38,19 +44,3 @@ func getUserIDFromContext(c echo.Context) (uint, error) {
 	}
 	return uint(v.(float64)), nil
 }
-
-// func createTokenCookie(r *http.Request, w *http.ResponseWriter, token string) error {
-// 	s, err := cookiestorage.DB().Get(r, "sessions")
-// 	if err != nil {
-// 		return err
-// 	}
-// 	s.Options = &sessions.Options{
-// 		Path:     "/",
-// 		Domain:   "",
-// 		MaxAge:   time.Now().Minute() * 30,
-// 		HttpOnly: true,
-// 	}
-// 	s.Values["token"] = token
-// 	err = s.Save(r, *w)
-// 	return err
-// }
