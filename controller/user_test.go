@@ -1,108 +1,37 @@
 package controller_test
 
 import (
+	"errors"
 	"testing"
 	"users-service/controller"
+	"users-service/mocks"
 	"users-service/model"
-	"users-service/storage"
+	"users-service/pkg"
+
+	"github.com/stretchr/testify/mock"
 )
 
-func dropsTables(t *testing.T, tables ...interface{}) {
-	err := storage.DB().Migrator().DropTable(tables...)
-	if err != nil {
-		t.Fatalf("Failed to clean database: %s", err)
-	}
-}
-func TestSingUpIntegration(t *testing.T) {
-	storage.New(storage.TESTING)
-	models := []interface{}{model.Account{}, model.Role{}, model.AccountRole{}}
-	err := storage.DB().AutoMigrate(models...)
-	if err != nil {
-		t.Fatalf("Failed to Create tables: %s", err)
-	}
-	t.Cleanup(func() { dropsTables(t, models...) })
+func TestGenerateCode(t *testing.T) {
+	ve := mocks.NewVerificationStorager(t)
+	u := mocks.NewUserStorager(t)
+	mail := mocks.NewMailer(t)
 
-	testCase := []struct {
-		in   model.Account
-		want error
+	ve.On("Create", mock.Anything).Return(nil)
+	mail.On("Confirm", "mail@mail.com", mock.Anything).Return(nil)
+	tests := []struct {
+		give    uint
+		wantErr error
 	}{
-		{model.Account{
-			Email:    "cualquiera",
-			Password: "Password12345.",
-		}, controller.ErrEmailNotValid},
-		{model.Account{
-			Email:    "usuario@mail.com",
-			Password: "as",
-		}, controller.ErrPasswordNotValid},
-		{model.Account{
-			Email:    "usuario@mail.com",
-			Password: "Password12345.",
-		}, nil},
-		{model.Account{
-			Email:    "usuario@mail.com",
-			Password: "Password12345.",
-		}, controller.ErrEmailAlreadyInUsed},
-		{model.Account{
-			Email:    "usuario1@mail.com",
-			Password: " ",
-		}, controller.ErrPasswordNotValid},
-		{model.Account{
-			Email:    "usuario1@mail.com",
-			Password: "Password12345. ",
-		}, nil},
+		{1, nil},
+		{2, pkg.ErrNoRowsAffected},
 	}
 
-	for _, tc := range testCase {
-		err := controller.SignUp(&tc.in)
-		if err != tc.want {
-			t.Errorf("Got: %s, want: %s", err, tc.want)
+	for _, tt := range tests {
+		u.On("Find", tt.give).Return(model.User{Email: "mail@mail.com"}, tt.wantErr)
+		us := controller.NewUserService(u, ve, mail)
+		gotErr := us.GenerateCode(tt.give)
+		if !errors.Is(gotErr, tt.wantErr) {
+			t.Errorf("got err: %s, want error: %s", gotErr, tt.wantErr)
 		}
-	}
-}
-
-func TestSingInIntegration(t *testing.T) {
-	storage.New(storage.TESTING)
-	models := []interface{}{model.Account{}, model.Role{}, model.AccountRole{}}
-	err := storage.DB().AutoMigrate(models...)
-	if err != nil {
-		t.Fatalf("Failed to Create tables: %s", err)
-	}
-	t.Cleanup(func() { dropsTables(t, models...) })
-	insertUsers()
-	testCase := []struct {
-		in   model.Account
-		want error
-	}{
-		{
-			model.Account{Email: "valid@account.com", Password: "PassOk1234. "}, nil,
-		},
-		{
-			model.Account{Email: "notAnEmail", Password: "ValidPass1234."}, controller.ErrEmailNotValid,
-		},
-		{
-			model.Account{Email: "NotAnCreatedAccount@mail.com", Password: "ValidPass123."}, controller.ErrUserNotFound,
-		},
-		{
-			model.Account{Email: "valid@account.com", Password: "WrongPass123."}, controller.ErrWrongPassword,
-		},
-		{
-			model.Account{Email: "valid@account.com", Password: "notapass"}, controller.ErrPasswordNotValid,
-		},
-	}
-
-	for _, tc := range testCase {
-		_, gotErr := controller.SignIn(&tc.in)
-		if gotErr != tc.want {
-			t.Errorf("Got: %s, want: %s", gotErr, tc.want)
-		}
-	}
-}
-
-func insertUsers() {
-	data := []model.Account{
-		{Email: "valid@account.com", Password: "PassOk1234. "},
-	}
-	for _, d := range data {
-		controller.SignUp(&d)
 	}
 }

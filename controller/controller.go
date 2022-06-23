@@ -1,9 +1,63 @@
 package controller
 
 import (
+	"encoding/base64"
+	"errors"
+	"math/rand"
 	"net/mail"
+	"time"
 	"unicode"
+	"unsafe"
+
+	"golang.org/x/crypto/bcrypt"
 )
+
+const (
+	CHARSET     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	CHARSETBITS = 6                  // 6 bits to represent a letter index
+	CHARSETMASK = 1<<CHARSETBITS - 1 // All 1-bits, as many as letterIdxBits
+	CHARSETMAX  = 63 / CHARSETBITS   // # of letter indices fitting in 63 bits
+	CODESIZE    = 6
+)
+
+var (
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
+	ErrInvalidRefreshToken  = errors.New("invalid refresh token")
+	ErrCantSaveTokenRefresh = errors.New("cant save token refresh")
+	ErrNullCode             = errors.New("null code")
+	ErrNoRowsAffected       = errors.New("no rows affected")
+	ErrNullValue            = errors.New("null value")
+	ErrUnauthorizedUser     = errors.New("unauthorized user")
+)
+
+// Generate a random string with size
+func generateRandomString(size int) string {
+	src := rand.NewSource(time.Now().UnixNano())
+	b := make([]byte, size)
+	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
+	for i, cache, remain := size-1, src.Int63(), CHARSETMAX; i >= 0; {
+		if remain == 0 {
+			cache, remain = src.Int63(), CHARSETMAX
+		}
+		if idx := int(cache & CHARSETMASK); idx < len(CHARSET) {
+			b[i] = CHARSET[idx]
+			i--
+		}
+		cache >>= CHARSETBITS
+		remain--
+	}
+
+	return *(*string)(unsafe.Pointer(&b))
+}
+
+// hasAndSalt encrypt using RSA
+func hashAndSalt(pwd []byte) ([]byte, error) {
+	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
+	if err != nil {
+		return nil, err
+	}
+	return hash, nil
+}
 
 // isEmailValid return true if the email is valid, else return false
 func isEmailValid(email string) bool {
@@ -42,3 +96,35 @@ func isPasswordValid(pwd string) bool {
 
 	return hasLower && hasNumber && hasSpecial && hasUpperCase
 }
+
+// func hashFgp(fgp []byte) []byte {
+// 	h := sha256.New()
+// 	h.Write(fgp)
+// 	return h.Sum(nil)
+// }
+
+// GenerateFgp return a random Fgp string and bytes
+func generateFgp(n int) (string, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
+}
+
+// func equalFpgAndHash(fgp []byte, hash *string) bool {
+// 	hfgp := hashFgp(fgp)
+// 	return bytes.Equal(hfgp, []byte(*hash))
+// }
+
+// func createToken(id uint, utp userType) (*string, error) {
+// 	t, err := authorization.GenerateToken(id, uint(utp))
+// 	if err != nil {
+// 		return t, err
+// 	}
+// 	if t == nil {
+// 		return t, ErrNullValue
+// 	}
+// 	return t, err
+// }

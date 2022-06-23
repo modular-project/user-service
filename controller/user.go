@@ -2,10 +2,10 @@ package controller
 
 import (
 	"errors"
+	"fmt"
+	"strings"
+	"time"
 	"users-service/model"
-	"users-service/storage"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -14,55 +14,109 @@ var (
 	ErrEmailAlreadyInUsed = errors.New("email already in use")
 	ErrWrongPassword      = errors.New("wrong password")
 	ErrUserNotFound       = errors.New("user not found")
+	ErrCodeNotFound       = errors.New("code not found")
+	ErrExpiredCode        = errors.New("expired code")
+	ErrInvalidCode        = errors.New("invalid code")
 )
 
-// hasAndSalt encrypt using RSA
-func hashAndSalt(pwd []byte) ([]byte, error) {
-	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
-	if err != nil {
-		return nil, err
-	}
-	return hash, nil
+type UserStorager interface {
+	Update(*model.User) error         // Update
+	Find(id uint) (model.User, error) // don't return password
+	Create(*model.User) error
+	ChangePassword(UserID uint, password *string) error
+	FindByEmail(*string) (model.User, error) //return Password and ID
+	Verify(UserID uint) error
+	IsEmployee(userID uint) bool
 }
 
-func SignUp(m *model.Account) error {
-	if !isEmailValid(m.Email) {
-		return ErrEmailNotValid
+type VerificationStorager interface {
+	Find(UserID uint) (model.Verification, error)
+	Delete(UserID uint) error
+	Create(*model.Verification) error
+}
+
+type Mailer interface {
+	Confirm(dest string, code string) error
+}
+
+type UserService struct {
+	user UserStorager
+	ver  VerificationStorager
+	mail Mailer
+}
+
+func NewUserService(u UserStorager, ver VerificationStorager, mail Mailer) UserService {
+	return UserService{u, ver, mail}
+}
+
+func (st UserService) Data(ID uint) (model.User, error) {
+	return st.user.Find(ID)
+}
+
+func (st UserService) Verify(userID uint, code string) error {
+	if code == "" {
+		return ErrNullCode
 	}
-	if !isPasswordValid(m.Password) {
-		return ErrPasswordNotValid
-	}
-	if storage.DB().Where("email = ?", m.Email).First(&model.Account{}).RowsAffected != 0 {
-		return ErrEmailAlreadyInUsed
-	}
-	pwd, err := hashAndSalt([]byte(m.Password))
+	ver, err := st.ver.Find(userID)
 	if err != nil {
 		return err
 	}
-	m.Password = string(pwd)
-	m.ID = 0
-	m.RoleID = 0
-	m.IsConfirmated = false
-	return storage.DB().Create(m).Error
+	if ver.ExpiresAt.Before(time.Now()) {
+		return ErrExpiredCode
+	}
+	if !strings.EqualFold(code, ver.Code) {
+		return ErrInvalidCode
+	}
+	err = st.user.Verify(userID)
+	if err != nil {
+		return fmt.Errorf("st.user.Verify: %w", err)
+	}
+	return st.ver.Delete(userID)
 }
 
-func SignIn(m *model.Account) (model.Account, error) {
-	user := model.Account{}
-	if !isEmailValid(m.Email) {
-		return model.Account{}, ErrEmailNotValid
+func (st UserService) GenerateCode(userID uint) error {
+	user, err := st.user.Find(userID)
+	if err != nil {
+		return fmt.Errorf("error at User.Find: %w", err)
 	}
-	if !isPasswordValid(m.Password) {
-		return model.Account{}, ErrPasswordNotValid
+	code := generateRandomString(CODESIZE)
+	err = st.mail.Confirm(user.Email, code)
+	if err != nil {
+		return fmt.Errorf("error at send email: %w", err)
 	}
-	rows := storage.DB().First(&user,
-		&model.Account{
-			Email: m.Email,
-		}).RowsAffected
-	if rows != 1 {
-		return model.Account{}, ErrUserNotFound
+	m := model.Verification{
+		UserID:    userID,
+		Code:      code,
+		ExpiresAt: time.Now().Add(time.Minute * 15),
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(m.Password)); err != nil {
-		return model.Account{}, ErrWrongPassword
+	err = st.ver.Create(&m)
+	if err != nil {
+		return fmt.Errorf("error at create verification in DB: %w", err)
 	}
-	return user, nil
+	return nil
+}
+
+func (st UserService) ChangePassword(userID uint, password *string) error {
+	if password == nil {
+		return ErrNullValue
+	}
+	if !isPasswordValid(*password) {
+		return ErrPasswordNotValid
+	}
+	pwdB, err := hashAndSalt([]byte(*password))
+	if err != nil {
+		return fmt.Errorf("error at hashAndSalt password: %w", err)
+	}
+	pwd := string(pwdB)
+	return st.user.ChangePassword(userID, &pwd)
+}
+
+func (st UserService) UpdateData(user *model.User) error {
+	if user.ID == 0 {
+		return ErrUserNotFound
+	}
+	if st.user.IsEmployee(user.ID) {
+		return ErrUnauthorizedUser
+	}
+	return st.user.Update(user)
 }
