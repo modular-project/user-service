@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	db *gorm.DB
+	_db *gorm.DB
 )
 
 func getErrorFromResult(tx *gorm.DB) error {
@@ -38,8 +38,8 @@ func newPostgresDB(u *DBConnection) error {
 	var err error
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
 		u.Host, u.User, u.Password, u.NameDB, u.Port)
-	db, err = gorm.Open(postgres.Open(dsn))
-	if db == nil {
+	_db, err = gorm.Open(postgres.Open(dsn))
+	if _db == nil {
 		log.Fatalf("nil db at open db")
 	}
 	if err != nil {
@@ -50,9 +50,13 @@ func newPostgresDB(u *DBConnection) error {
 }
 
 func Drop(tables ...interface{}) error {
-	return db.Migrator().DropTable(tables...)
+	return _db.Migrator().DropTable(tables...)
 }
 
 func Migrate(tables ...interface{}) error {
-	return db.AutoMigrate(tables...)
+	return _db.AutoMigrate(tables...)
+}
+
+func DB() *gorm.DB {
+	return _db
 }

@@ -11,7 +11,7 @@ type verifyStore struct {
 }
 
 func NewVerifyStore() verifyStore {
-	return verifyStore{db}
+	return verifyStore{_db}
 }
 
 func (vs verifyStore) Find(userID uint) (model.Verification, error) {

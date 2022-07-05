@@ -12,6 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
+	google.golang.org/grpc v1.46.2
 	gorm.io/driver/postgres v1.3.5
 	gorm.io/gorm v1.23.5
 )

@@ -28,6 +28,12 @@ var (
 	ErrNoRowsAffected       = errors.New("no rows affected")
 	ErrNullValue            = errors.New("null value")
 	ErrUnauthorizedUser     = errors.New("unauthorized user")
+	ErrAlreadyEmployee      = errors.New("user is already an employee")
+	ErrIsNotAnEmployee      = errors.New("user is not an employee")
+	ErrUserIsNotVerified    = errors.New("user is not verified")
+	ErrInvalidSalary        = errors.New("invalid salary")
+	ErrEstablishNecesary    = errors.New("an establishment is necesarry")
+	ErrCannotBeAssigned     = errors.New("cannot be assigned to the establishment")
 )
 
 // Generate a random string with size
@@ -97,13 +103,6 @@ func isPasswordValid(pwd string) bool {
 	return hasLower && hasNumber && hasSpecial && hasUpperCase
 }
 
-// func hashFgp(fgp []byte) []byte {
-// 	h := sha256.New()
-// 	h.Write(fgp)
-// 	return h.Sum(nil)
-// }
-
-// GenerateFgp return a random Fgp string and bytes
 func generateFgp(n int) (string, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
@@ -112,19 +111,3 @@ func generateFgp(n int) (string, error) {
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
 }
-
-// func equalFpgAndHash(fgp []byte, hash *string) bool {
-// 	hfgp := hashFgp(fgp)
-// 	return bytes.Equal(hfgp, []byte(*hash))
-// }
-
-// func createToken(id uint, utp userType) (*string, error) {
-// 	t, err := authorization.GenerateToken(id, uint(utp))
-// 	if err != nil {
-// 		return t, err
-// 	}
-// 	if t == nil {
-// 		return t, ErrNullValue
-// 	}
-// 	return t, err
-// }

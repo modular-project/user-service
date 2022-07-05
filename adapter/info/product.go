@@ -2,9 +2,11 @@ package info
 
 import (
 	"context"
+	"log"
 
 	"github.com/modular-project/protobuffers/information/product"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type productService struct {
@@ -12,17 +14,22 @@ type productService struct {
 }
 
 func NewProductService(host string) (productService, error) {
-	conn, err := grpc.Dial(host)
+	do := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.Dial(host, do)
 	if err != nil {
 		return productService{}, err
 	}
 	pc := product.NewProductServiceClient(conn)
+	log.Printf("produc server connection started on: %s", host)
 	return productService{pc: pc}, err
 }
 
 func (ps productService) Create(ctx context.Context, p *product.Product) (uint64, error) {
 	r, err := ps.pc.Create(ctx, p)
-	return r.Id, err
+	if err != nil {
+		return 0, err
+	}
+	return r.Id, nil
 }
 
 func (ps productService) Get(ctx context.Context, id uint64) (product.Product, error) {
@@ -34,7 +41,10 @@ func (ps productService) Get(ctx context.Context, id uint64) (product.Product, e
 }
 
 func (ps productService) GetAll(ctx context.Context) ([]*product.Product, error) {
-	r, err := ps.pc.GetAll(ctx, nil)
+	r, err := ps.pc.GetAll(ctx, &product.RequestGetAll{})
+	if err != nil {
+		return nil, err
+	}
 	return r.Products, err
 }
 
@@ -50,5 +60,8 @@ func (ps productService) Delete(ctx context.Context, id uint64) error {
 
 func (ps productService) Update(ctx context.Context, id uint64, p *product.Product) (uint64, error) {
 	r, err := ps.pc.Update(ctx, &product.RequestUpdate{Id: id, Product: p})
-	return r.Id, err
+	if err != nil {
+		return 0, err
+	}
+	return r.Id, nil
 }

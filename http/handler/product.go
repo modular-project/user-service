@@ -56,6 +56,9 @@ func (pub ProductUC) GetAll(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
 	}
+	if ps == nil {
+		c.NoContent(http.StatusOK)
+	}
 	return c.JSON(http.StatusOK, ps)
 }
 

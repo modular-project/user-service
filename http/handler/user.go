@@ -29,7 +29,7 @@ type UserUC struct {
 	ss SignServicer
 }
 
-func NewUserService(uc UserServicer, ss SignServicer) UserUC {
+func NewUserUC(uc UserServicer, ss SignServicer) UserUC {
 	return UserUC{uc, ss}
 }
 

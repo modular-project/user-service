@@ -16,7 +16,7 @@ type userStore struct {
 }
 
 func NewUserStore() userStore {
-	return userStore{db}
+	return userStore{_db}
 }
 
 func (us userStore) Update(user *model.User) error {

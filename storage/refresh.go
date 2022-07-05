@@ -11,7 +11,7 @@ type refreshStore struct {
 }
 
 func NewRefreshStore() refreshStore {
-	return refreshStore{db}
+	return refreshStore{_db}
 }
 
 func (rs refreshStore) Create(re *model.Refresh) error {

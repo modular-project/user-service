@@ -16,11 +16,11 @@ type kitchenSignStore struct {
 }
 
 func NewUserSignStore() userSignStore {
-	return userSignStore{db}
+	return userSignStore{_db}
 }
 
 func NewKitchenSignStore() kitchenSignStore {
-	return kitchenSignStore{db}
+	return kitchenSignStore{_db}
 }
 
 func (us userSignStore) Find(email string) (model.LogIn, error) {

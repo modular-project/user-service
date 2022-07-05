@@ -23,7 +23,6 @@ type jsonEmail struct {
 	Email    string `json:"email"`
 	Host     string `json:"host"`
 	Port     string `json:"port"`
-	CodeHost string
 }
 
 type send struct {
@@ -63,27 +62,23 @@ func getEnv(env string) (string, error) {
 }
 
 func loadData() error {
-	user, err := getEnv("RGE_MAIL_USER")
+	user, err := getEnv("MAIL_USER")
 	if err != nil {
 		return err
 	}
-	password, err := getEnv("RGE_MAIL_PASSWORD")
+	password, err := getEnv("MAIL_PWD")
 	if err != nil {
 		return err
 	}
-	port, err := getEnv("RGE_MAIL_PORT")
+	port, err := getEnv("MAIL_PORT")
 	if err != nil {
 		return err
 	}
-	mail, err := getEnv("RGE_MAIL_NAME")
+	mail, err := getEnv("MAIL_NAME")
 	if err != nil {
 		return err
 	}
-	host, err := getEnv("RGE_MAIL_HOST")
-	if err != nil {
-		return err
-	}
-	code, err := getEnv("RGE_MAIL_CODE_HOST")
+	host, err := getEnv("MAIL_HOST")
 	if err != nil {
 		return err
 	}
@@ -91,7 +86,7 @@ func loadData() error {
 	if err != nil {
 		return err
 	}
-	je := jsonEmail{user, password, mail, host, port, code}
+	je := jsonEmail{user, password, mail, host, port}
 
 	config = &je
 	auth = LoginAuth(config.User, config.Password)
