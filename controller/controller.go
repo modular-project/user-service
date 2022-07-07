@@ -2,12 +2,12 @@ package controller
 
 import (
 	"encoding/base64"
-	"errors"
 	"math/rand"
 	"net/mail"
 	"time"
 	"unicode"
 	"unsafe"
+	"users-service/pkg"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,19 +21,16 @@ const (
 )
 
 var (
-	ErrRefreshTokenNotFound = errors.New("refresh token not found")
-	ErrInvalidRefreshToken  = errors.New("invalid refresh token")
-	ErrCantSaveTokenRefresh = errors.New("cant save token refresh")
-	ErrNullCode             = errors.New("null code")
-	ErrNoRowsAffected       = errors.New("no rows affected")
-	ErrNullValue            = errors.New("null value")
-	ErrUnauthorizedUser     = errors.New("unauthorized user")
-	ErrAlreadyEmployee      = errors.New("user is already an employee")
-	ErrIsNotAnEmployee      = errors.New("user is not an employee")
-	ErrUserIsNotVerified    = errors.New("user is not verified")
-	ErrInvalidSalary        = errors.New("invalid salary")
-	ErrEstablishNecesary    = errors.New("an establishment is necesarry")
-	ErrCannotBeAssigned     = errors.New("cannot be assigned to the establishment")
+	ErrRefreshTokenNotFound = pkg.UnauthorizedErr("refresh token not found")
+	ErrInvalidRefreshToken  = pkg.UnauthorizedErr("invalid refresh token")
+	ErrUnauthorizedUser     = pkg.ForbiddenErr("unauthorized user")
+	ErrAlreadyEmployee      = pkg.BadErr("user is already an employee")
+	ErrIsNotAnEmployee      = pkg.BadErr("user is not an employee")
+	ErrUserIsNotVerified    = pkg.BadErr("user is not verified")
+	ErrNullValue            = pkg.BadErr("null value")
+	ErrInvalidSalary        = pkg.BadErr("invalid salary")
+	ErrEstablishNecesary    = pkg.BadErr("an establishment is necesarry")
+	ErrCannotBeAssigned     = pkg.BadErr("cannot be assigned to the establishment")
 )
 
 // Generate a random string with size

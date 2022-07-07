@@ -45,13 +45,18 @@ func NewSignService(re RefreshStorager, va Validater, si SignStorager, to Tokene
 	return SignService{re: re, va: va, si: si, to: to}
 }
 
+func isNotFoundErr(err error) bool {
+	var nf interface{ IsNotFound() }
+	return errors.As(err, &nf)
+}
+
 func (ss SignService) SignUp(l *model.LogIn) error {
 	err := ss.va.Validate(l)
 	if err != nil {
 		return err
 	}
 	_, err = ss.si.Find(l.User)
-	if err != nil && !errors.Is(err, pkg.ErrNoRowsAffected) {
+	if err != nil && !isNotFoundErr(err) {
 		return err
 	}
 	if err == nil {

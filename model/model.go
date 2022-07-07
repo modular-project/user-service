@@ -18,60 +18,60 @@ type RoleID uint
 
 type Model struct {
 	ID        uint           `gorm:"primarykey" json:"id"`
-	CreatedAt time.Time      `json:"c_at,omitempty"`
-	UpdatedAt time.Time      `json:"u_at,omitempty"`
+	CreatedAt *time.Time     `json:"c_at,omitempty"`
+	UpdatedAt *time.Time     `json:"u_at,omitempty"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type User struct {
 	Model
 
-	Email      string    `gorm:"not null; unique"`
-	Password   string    `gorm:"not null" json:",omitempty"`
-	URL        *string   `json:",omitempty"`
-	Name       *string   `json:",omitempty"`
-	BirthDate  time.Time `json:"bdate,omitempty"`
-	IsVerified bool      `gorm:"not null"`
+	Email      string     `gorm:"not null; unique" json:"email,omitempty"`
+	Password   string     `gorm:"not null" json:"password,omitempty"`
+	URL        *string    `json:"url,omitempty"`
+	Name       *string    `json:"name,omitempty"`
+	BirthDate  *time.Time `json:"bdate,omitempty"`
+	IsVerified bool       `json:"is_verified,omitempty" gorm:"not null"`
 
-	RoleID          RoleID `gorm:"<-:false; -:migration" json:",omitempty"`
-	EstablishmentID uint   `gorm:"<-:false; -:migration" json:",omitempty"`
-	IsActive        bool   `gorm:"<-:false; -:migration" json:",omitempty"`
-	Roles           []Role `gorm:"many2many:user_roles;"`
+	RoleID          RoleID `gorm:"<-:false; -:migration" json:"role_id,omitempty"`
+	EstablishmentID uint   `gorm:"<-:false; -:migration" json:"est_id,omitempty"`
+	IsActive        bool   `gorm:"<-:false; -:migration" json:"is_active,omitempty"`
+	Roles           []Role `gorm:"many2many:user_roles;" json:"-"`
 }
 
 type Verification struct {
 	UserID    uint
-	Code      string
-	ExpiresAt time.Time
+	Code      string         `json:"code,omitempty"`
+	ExpiresAt time.Time      `json:"-"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type Role struct {
 	Model
-	Name  string
+	Name  string `json:"name,omitempty"`
 	Level uint
 }
 
 type UserRole struct {
 	Model
-	UserID          uint
-	RoleID          RoleID
-	EstablishmentID uint
-	IsActive        bool
-	Salary          float64
+	UserID          uint    `json:"user_id"`
+	RoleID          RoleID  `json:"role_id"`
+	EstablishmentID uint    `json:"est_id"`
+	IsActive        bool    `json:"is_active"`
+	Salary          float64 `json:"salary"`
 }
 
 type Kitchen struct {
 	Model
-	User            string
-	Password        string
+	User            string `json:"user,omitempty"`
+	Password        string `json:"password,omitempty"`
 	EstablishmentID uint
 }
 
 type LogIn struct {
 	ID       uint
-	User     string
-	Password string
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
 type Refresh struct {

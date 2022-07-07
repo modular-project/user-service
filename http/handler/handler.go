@@ -3,14 +3,18 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"users-service/pkg"
 
 	"github.com/gbrlsnchs/jwt"
 	"github.com/labstack/echo"
 )
 
 var (
-	ErrRefreshTokenNotFound = errors.New("refresh token not found")
-	ErrUserIdNotFoundInJwt  = errors.New("user id not found in jwt")
+	ErrUserIdNotFoundInJwt = errors.New("user id not found in jwt")
+	ErrBindData            = pkg.BadErr("bind data")
+	ErrGetIDFromContext    = pkg.BadErr("get id from context")
+	ErrGetParamFromPath    = pkg.BadErr("get param from path")
+	ErrGetRefreshCookie    = pkg.BadErr("get refresh cookie")
 )
 
 func createRefreshCookie(c echo.Context, refreshToken string) {
@@ -25,7 +29,7 @@ func createRefreshCookie(c echo.Context, refreshToken string) {
 
 func createResponse(message string) map[string]interface{} {
 	return map[string]interface{}{
-		"msg": message,
+		"message": message,
 	}
 }
 

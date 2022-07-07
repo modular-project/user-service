@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"users-service/pkg"
+	"users-service/model"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -23,13 +23,13 @@ var (
 
 func getErrorFromResult(tx *gorm.DB) error {
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-		return pkg.ErrNoRowsAffected
+		return ErrNotFound
 	}
 	if tx.Error != nil {
 		return tx.Error
 	}
 	if tx.RowsAffected == 0 {
-		return pkg.ErrNoRowsAffected
+		return ErrNotFound
 	}
 	return nil
 }
@@ -49,14 +49,78 @@ func newPostgresDB(u *DBConnection) error {
 	return nil
 }
 
+func setRoles() error {
+	roles := []model.Role{
+		{
+			Model: model.Model{ID: uint(model.OWNER)},
+			Name:  "Owner",
+		}, {
+			Model: model.Model{ID: uint(model.ADMIN)},
+			Name:  "Admin",
+		}, {
+			Model: model.Model{ID: uint(model.MANAGER)},
+			Name:  "Manager",
+		}, {
+			Model: model.Model{ID: uint(model.WAITER)},
+			Name:  "Waiter",
+		},
+	}
+	isRoles := []model.Role{}
+	res := _db.Find(&isRoles)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected != 0 {
+		return nil
+	}
+	res = _db.CreateInBatches(&roles, len(roles))
+	return getErrorFromResult(res)
+}
+
+func setOwner() error {
+	u := model.User{}
+	res := _db.Where("email = ?", "owner@mail.com").First(&u)
+	err := getErrorFromResult(res)
+	if err != nil {
+		return err
+	}
+	if u.IsVerified {
+		return nil
+	}
+	res = _db.Model(&model.User{}).Where("email = ?", "owner@mail.com").Update("is_verified", true)
+	err = getErrorFromResult(res)
+	if err != nil {
+		return err
+	}
+	res = _db.Create(&model.UserRole{
+		UserID:   u.ID,
+		RoleID:   model.OWNER,
+		Salary:   100,
+		IsActive: true,
+	})
+	return getErrorFromResult(res)
+}
+
 func Drop(tables ...interface{}) error {
 	return _db.Migrator().DropTable(tables...)
 }
 
 func Migrate(tables ...interface{}) error {
+	err := _db.SetupJoinTable(&model.User{}, "Roles", &model.UserRole{})
+	if err != nil {
+		return fmt.Errorf("fail at setup join table :%w", err)
+	}
 	return _db.AutoMigrate(tables...)
+	// if err != nil {
+	// 	return err
+	// }
+	// err = setRoles()
+	// if err != nil {
+	// 	return err
+	// }
+	// return setOwner()
 }
 
-func DB() *gorm.DB {
-	return _db
-}
+// func DB() *gorm.DB {
+// 	return _db
+// }

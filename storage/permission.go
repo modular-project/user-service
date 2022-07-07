@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"users-service/model"
 
 	"gorm.io/gorm"
@@ -17,10 +18,12 @@ func NewJobStore() jobStore {
 func (js jobStore) Find(email string) (model.User, error) {
 	user := model.User{}
 	res := js.db.Model(&user).Where("email = ?", email).
-		Select("user.id", "user.is_verified", "r.role_id, r.establishment_id, r.is_active").
-		Joins("LEFT JOIN user_roles as r ON r.user_id = user.id").
-		Order("r.id DESC").Limit(1)
-	return user, getErrorFromResult(res)
+		Select("users.id", "users.is_verified", "r.role_id", "r.establishment_id", "r.is_active").
+		Joins("LEFT JOIN user_roles as r ON r.user_id = users.id").Last(&user)
+	if err := getErrorFromResult(res); err != nil {
+		return model.User{}, fmt.Errorf("user %w", err)
+	}
+	return user, nil
 }
 
 func (js jobStore) Job(uID uint) (model.UserRole, error) {

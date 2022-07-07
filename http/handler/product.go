@@ -30,11 +30,11 @@ func NewProductUC(ps ProductServicer) ProductUC {
 func (puc ProductUC) Create(c echo.Context) error {
 	p := product.Product{}
 	if err := c.Bind(&p); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return fmt.Errorf("%w, %v", ErrBindData, err)
 	}
 	id, err := puc.ps.Create(context.TODO(), &p)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.JSON(http.StatusCreated, responseID(id))
 }
@@ -42,11 +42,11 @@ func (puc ProductUC) Create(c echo.Context) error {
 func (puc ProductUC) Get(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
 	}
 	p, err := puc.ps.Get(context.Background(), id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.JSON(http.StatusOK, p)
 }
@@ -54,7 +54,7 @@ func (puc ProductUC) Get(c echo.Context) error {
 func (pub ProductUC) GetAll(c echo.Context) error {
 	ps, err := pub.ps.GetAll(context.Background())
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	if ps == nil {
 		c.NoContent(http.StatusOK)
@@ -68,11 +68,14 @@ func (pub ProductUC) GetInBatch(c echo.Context) error {
 	}
 	var ids IDs
 	if err := c.Bind(&ids); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("bind: %s", err)))
+		return fmt.Errorf("%w, %v", ErrBindData, err)
 	}
 	ps, err := pub.ps.GetInBatch(context.Background(), ids.IDs)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
+	}
+	if ps == nil {
+		return c.NoContent(http.StatusOK)
 	}
 	return c.JSON(http.StatusOK, ps)
 }
@@ -80,11 +83,11 @@ func (pub ProductUC) GetInBatch(c echo.Context) error {
 func (pub ProductUC) Delete(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
 	}
 	err = pub.ps.Delete(context.Background(), id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
@@ -92,15 +95,15 @@ func (pub ProductUC) Delete(c echo.Context) error {
 func (pub ProductUC) Update(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
 	}
 	p := product.Product{}
 	if err := c.Bind(&p); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return fmt.Errorf("%w, %v", ErrBindData, err)
 	}
 	id, err = pub.ps.Update(context.Background(), id, &p)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.JSON(http.StatusOK, responseID(id))
 }

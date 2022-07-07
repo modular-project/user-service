@@ -32,6 +32,19 @@ type OrderBy struct {
 	By   By
 	Sort Sort
 }
+type Search struct {
+	OrderBys []OrderBy
+
+	Limit  int
+	Offset int
+}
+
+type SearchEMPL struct {
+	Search
+	Status
+	Rols []uint `json:"roles,omitempty"`
+	Ests []uint `json:"ests,omitempty"`
+}
 
 func (o OrderBy) get() string {
 	var sort string
@@ -57,13 +70,6 @@ func (o OrderBy) get() string {
 	return b.String()
 }
 
-type Search struct {
-	OrderBys []OrderBy
-
-	Limit  int
-	Offset int
-}
-
 func (s Search) Query() string {
 	var q strings.Builder
 	for i, o := range s.OrderBys {
@@ -73,11 +79,4 @@ func (s Search) Query() string {
 		q.WriteString(o.get())
 	}
 	return q.String()
-}
-
-type SearchEMPL struct {
-	Search
-	Status
-	Rols []uint
-	Ests []uint
 }

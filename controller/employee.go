@@ -13,6 +13,8 @@ type EMPLStorager interface {
 type Canner interface {
 	CanUpdate(from, target uint) error
 	CanHire(uint, string, *model.UserRole) error
+	Greater(uID uint, rID model.RoleID) error
+	Equal(uID uint, rID model.RoleID) (uint, error)
 }
 
 type Updater interface {
@@ -49,12 +51,19 @@ func (es employeeService) Get(userID uint) (model.UserJobs, error) {
 }
 
 // WaiterSearch find all waiters in establishment
-func (es employeeService) SearchWaiters(establishmentID uint, s *model.Search) ([]model.User, error) {
-	return es.est.SearchWaiters(establishmentID, s)
+func (es employeeService) SearchWaiters(uID uint, s *model.Search) ([]model.User, error) {
+	eID, err := es.can.Equal(uID, model.MANAGER)
+	if err != nil {
+		return nil, err
+	}
+	return es.est.SearchWaiters(eID, s)
 }
 
 // Search find in all employees
-func (es employeeService) Search(s *model.SearchEMPL) ([]model.User, error) {
+func (es employeeService) Search(uID uint, s *model.SearchEMPL) ([]model.User, error) {
+	if err := es.can.Greater(uID, model.MANAGER); err != nil {
+		return nil, err
+	}
 	return es.est.Search(s)
 }
 

@@ -2,11 +2,13 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 	"users-service/mocks"
 	"users-service/model"
 	"users-service/pkg"
+	"users-service/storage"
 
 	"github.com/gbrlsnchs/jwt"
 	"github.com/stretchr/testify/assert"
@@ -104,6 +106,7 @@ func TestSingIn(t *testing.T) {
 }
 
 func TestVerify(t *testing.T) {
+	errNotFound := errors.New("not found")
 	tests := []struct {
 		giveUID  uint
 		giveCode string
@@ -119,7 +122,7 @@ func TestVerify(t *testing.T) {
 		}, {
 			giveUID:  2,
 			giveCode: "CODEOK",
-			wantErr:  pkg.ErrNoRowsAffected,
+			wantErr:  errNotFound,
 		}, {
 			giveUID:  3,
 			giveCode: "EXPIREDCODE",
@@ -129,7 +132,7 @@ func TestVerify(t *testing.T) {
 	ust := mocks.NewUserStorager(t)
 	ver := mocks.NewVerificationStorager(t)
 	ver.On("Find", uint(1)).Return(model.Verification{Code: "CODEOK", ExpiresAt: time.Now().Add(1 * time.Minute)}, nil)
-	ver.On("Find", uint(2)).Return(model.Verification{}, pkg.ErrNoRowsAffected)
+	ver.On("Find", uint(2)).Return(model.Verification{}, errNotFound)
 	ver.On("Find", uint(3)).Return(model.Verification{Code: "EXPIREDCODE", ExpiresAt: time.Now().Add(-1 * time.Minute)}, nil)
 	ver.On("Delete", uint(1)).Return(nil)
 	ust.On("Verify", mock.Anything).Return(nil)
@@ -137,7 +140,44 @@ func TestVerify(t *testing.T) {
 	for _, tt := range tests {
 		gotErr := us.Verify(tt.giveUID, tt.giveCode)
 		if !errors.Is(gotErr, tt.wantErr) {
+			t.Logf("code: %s,uID:  %d", tt.giveCode, tt.giveUID)
 			t.Errorf("got error: %s, want error: %s", gotErr, tt.wantErr)
 		}
+	}
+}
+
+func TestIsNotFoundErr(t *testing.T) {
+	type args struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "true",
+			args: args{
+				err: fmt.Errorf("this is a test: %w", storage.ErrNotFound),
+			},
+			want: true,
+		}, {
+			name: "false",
+			args: args{
+				err: fmt.Errorf("this is a test:"),
+			},
+			want: false,
+		}, {
+			name: "nil",
+			args: args{nil},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isNotFoundErr(tt.args.err); got != tt.want {
+				t.Errorf("ispkg.NotFoundErr() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

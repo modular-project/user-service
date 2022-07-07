@@ -1,9 +1,8 @@
-package storage_test
+package storage
 
 import (
 	"testing"
 	"users-service/model"
-	"users-service/storage"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -68,34 +67,31 @@ var tables = []struct {
 }
 
 func TestCleanup(t *testing.T) {
-	err := storage.NewDB(TestConfigDB)
+	err := NewDB(TestConfigDB)
 	if err != nil {
 		t.Fatalf("NewGormDB: %s", err)
 	}
 	models := []interface{}{model.User{}, model.Role{}, model.UserRole{}}
-	err = storage.Drop(models...)
+	err = Drop(models...)
 	if err != nil {
 		t.Fatalf("Failed to Create tables: %s", err)
 	}
 }
 func TestSearchEmployee(t *testing.T) {
-	err := storage.NewDB(TestConfigDB)
+	err := NewDB(TestConfigDB)
 	if err != nil {
 		t.Fatalf("NewGormDB: %s", err)
 	}
 	models := []interface{}{model.User{}, model.Role{}}
 	t.Cleanup(func() {
 		models := []interface{}{model.User{}, model.Role{}, "user_roles"}
-		err = storage.DB().Migrator().DropTable(models...)
+		err = _db.Migrator().DropTable(models...)
 		if err != nil {
 			t.Fatalf("Failed to Create tables: %s", err)
 		}
 	})
-	err = storage.DB().SetupJoinTable(&model.User{}, "Roles", &model.UserRole{})
-	if err != nil {
-		t.Fatalf("fail at setup join table :%s", err)
-	}
-	err = storage.Migrate(models...)
+
+	err = Migrate(models...)
 	if err != nil {
 		t.Fatalf("Failed to Create tables: %s", err)
 	}
@@ -149,7 +145,7 @@ func TestSearchEmployee(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		es := storage.NewEMPLStore()
+		es := NewEMPLStore()
 		users, err := es.Search(&tt.give)
 		if assert.NoError(err) {
 			if assert.Equal(len(tt.wantEmployees), len(users)) {
@@ -168,8 +164,8 @@ func TestSearchEmployee(t *testing.T) {
 	}
 }
 
-var TestConfigDB storage.DBConnection = storage.DBConnection{
-	TypeDB:   storage.POSTGRESQL,
+var TestConfigDB DBConnection = DBConnection{
+	TypeDB:   POSTGRESQL,
 	User:     "admin_restaurant",
 	Password: "RestAuraNt_pgsql.561965697",
 	Host:     "localhost",
@@ -177,16 +173,16 @@ var TestConfigDB storage.DBConnection = storage.DBConnection{
 	NameDB:   "testing",
 }
 
-func dropsTables(t *testing.T) {
-	models := []interface{}{model.User{}, model.Role{}, model.UserRole{}}
-	err := storage.Drop(models...)
-	if err != nil {
-		t.Fatalf("Failed to Create tables: %s", err)
-	}
-}
+// func dropsTables(t *testing.T) {
+// 	models := []interface{}{model.User{}, model.Role{}, model.UserRole{}}
+// 	err := Drop(models...)
+// 	if err != nil {
+// 		t.Fatalf("Failed to Create tables: %s", err)
+// 	}
+// }
 
 func setUsers(assert *assert.Assertions, t *testing.T) {
-	storage.DB().CreateInBatches(&_roles, len(_roles))
+	_db.CreateInBatches(&_roles, len(_roles))
 	for i := range tables {
 		if tables[i].name != "" {
 			tables[i].user.Name = &tables[i].name
@@ -194,9 +190,9 @@ func setUsers(assert *assert.Assertions, t *testing.T) {
 		for y := range tables[i].rols {
 			tables[i].rols[y].UserID = uint(i + 1)
 		}
-		err := storage.DB().Create(&tables[i].user).Error
+		err := _db.Create(&tables[i].user).Error
 		if assert.NoError(err) {
-			err = storage.DB().CreateInBatches(&tables[i].rols, len(tables[i].rols)).Error
+			err = _db.CreateInBatches(&tables[i].rols, len(tables[i].rols)).Error
 			assert.NoError(err)
 		}
 	}

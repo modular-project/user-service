@@ -17,6 +17,8 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func newDBConnection() storage.DBConnection {
@@ -99,10 +101,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("NewGormDB(%+v): %s", storage.DBConnection{}, err)
 	}
-	err = storage.DB().SetupJoinTable(&model.User{}, "Roles", &model.UserRole{})
-	if err != nil {
-		log.Fatalf("fail at setup join table :%s", err)
-	}
 	// Migrate tables to DB
 	storage.Migrate(
 		&model.User{},
@@ -122,7 +120,12 @@ func main() {
 	per := controller.NewPermission(storage.NewJobStore())
 	es := controller.NewEmployeeService(storage.NewEMPLStore(), storage.NewUserStore(), per)
 	// Start GRPC clients
-	ps, err := info.NewProductService(fmt.Sprintf("%s:%s", iHost, iPort))
+	do := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", iHost, iPort), do)
+	if err != nil {
+		log.Fatalf("fatal at start grpc connection in %s:%s, %v", iHost, iPort, err)
+	}
+	ps := info.NewProductService(conn)
 	if err != nil {
 		log.Fatalf("no se logro realizar la conexion: %v", err)
 	}

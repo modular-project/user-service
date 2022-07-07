@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"users-service/model"
 )
 
@@ -28,6 +29,29 @@ func (p permission) needEstablishment(role model.RoleID) bool {
 		return false
 	}
 	return true
+}
+
+func (p permission) Greater(uID uint, rID model.RoleID) error {
+	u, err := p.j.Job(uID)
+	if err != nil {
+		return err
+	}
+	if !u.RoleID.IsGreater(rID) {
+		return ErrUnauthorizedUser
+	}
+	return nil
+}
+
+// Equal Returns an error if the user does not have the role assigned, otherwise it returns the establishment ID with a null error
+func (p permission) Equal(uID uint, rID model.RoleID) (uint, error) {
+	u, err := p.j.Job(uID)
+	if err != nil {
+		return 0, err
+	}
+	if u.RoleID != rID {
+		return 0, ErrUnauthorizedUser
+	}
+	return u.EstablishmentID, nil
 }
 
 func (p permission) CanUpdate(from, target uint) error {
@@ -64,7 +88,7 @@ func (p permission) CanHire(con uint, email string, r *model.UserRole) error {
 	// Verify if user can be an employee
 	u, err := p.j.Find(email)
 	if err != nil {
-		return err
+		return fmt.Errorf("find mail %s: %w", email, err)
 	}
 	if u.IsActive {
 		return ErrAlreadyEmployee

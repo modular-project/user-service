@@ -8,7 +8,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.1 // indirect
-	github.com/modular-project/protobuffers v0.0.0-20220606222103-bafebc4b0ada
+	github.com/modular-project/protobuffers v0.0.0-20220707183935-ff2d20f29ab0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
