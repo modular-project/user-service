@@ -37,13 +37,13 @@ func (r route) user(e *echo.Echo) {
 }
 
 func (r route) employee(e *echo.Echo) {
-	g := e.Group("/api/v1/empl", r.mid.Login)
+	g := e.Group("/api/v1/employee", r.mid.Login)
 	g.GET("/", r.euc.Get)
 	g.GET("/:id", r.euc.GetByID)
 	g.POST("/search/", r.euc.Search)
 	g.POST("/search/waiter/", r.euc.Search)
-	g.POST("/hire/", r.euc.Hire)
-	g.POST("/hire/waiter/", r.euc.HireWaiter)
+	g.POST("/hire/:mail", r.euc.Hire)
+	g.POST("/hire/waiter/:mail", r.euc.HireWaiter)
 	g.PATCH("/fire/:id", r.euc.Fire)
 	g.PUT("/:id", r.euc.Update)
 }
@@ -61,6 +61,7 @@ func (r route) product(e *echo.Echo) {
 }
 
 func (r route) Start(e *echo.Echo) {
+	e.HTTPErrorHandler = r.mid.Errors
 	r.user(e)
 	r.employee(e)
 	r.product(e)

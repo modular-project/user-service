@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"users-service/model"
 
 	"gorm.io/gorm"
@@ -17,15 +18,16 @@ func NewEMPLStore() emplStore {
 
 func (es emplStore) Get(uID uint) (model.UserJobs, error) {
 	uj := model.UserJobs{}
-	res := es.db.Where("user_id = ?", uID).First(&uj.User)
+	res := es.db.Where("id = ?", uID).
+		Select("email", "id", "url", "name", "birth_date", "is_verified").First(&uj.User)
 	err := getErrorFromResult(res)
 	if err != nil {
-		return model.UserJobs{}, err
+		return model.UserJobs{}, fmt.Errorf("find user by id, %w", err)
 	}
-	res = es.db.Where("user_id = ?", uID).Find(&uj.User.Roles)
+	res = es.db.Where("user_id = ?", uID).Find(&uj.Jobs)
 	err = getErrorFromResult(res)
 	if err != nil {
-		return model.UserJobs{}, err
+		return model.UserJobs{}, fmt.Errorf("get jobs, %w", err)
 	}
 	return uj, nil
 }
@@ -62,22 +64,22 @@ func (es emplStore) SearchWaiters(estID uint, s *model.Search) ([]model.User, er
 func (es emplStore) Search(s *model.SearchEMPL) ([]model.User, error) {
 	users := []model.User{}
 	tx := es.db.Model(&users).Select("users.id", "users.email", "users.name",
-		"user_roles.establishment_id", "user_roles.role_id", "user_roles.is_active").
-		Joins("LEFT JOIN user_roles ON users.id = user_roles.user_id")
+		"r.establishment_id", "r.role_id", "r.is_active").
+		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id")
 	switch s.Status {
 	case model.ACTIVE:
-		tx = tx.Where("user_roles.is_active = true")
+		tx = tx.Where("r.is_active = true")
 	case model.NOACTVIE:
-		tx = tx.Where("user_roles.is_active = false")
+		tx = tx.Where("r.is_active = false")
 	case model.ANY:
 	default:
 		return nil, errors.New("no status")
 	}
 	if s.Rols != nil {
-		tx.Where("user_roles.role_id IN ?", s.Rols)
+		tx.Where("r.role_id IN ?", s.Rols)
 	}
 	if s.Ests != nil {
-		tx.Where("user_roles.establishment_id IN ?", s.Ests)
+		tx.Where("r.establishment_id IN ?", s.Ests)
 	}
 	q := s.Query()
 	if q != "" {

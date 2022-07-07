@@ -3,13 +3,14 @@ package handler_test
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"users-service/http/handler"
+	"users-service/http/middleware"
 	"users-service/mocks"
 	"users-service/model"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +57,7 @@ func TestSingUp(t *testing.T) {
 		si := mocks.NewSignUCer(t)
 		assert := assert.New(t)
 		if tt.wantCode != http.StatusCreated {
-			si.On("SignUp", mock.Anything).Return(errors.New("error at signup")).Once()
+			si.On("SignUp", mock.Anything).Return(pkg.BadErr("bad request")).Once()
 		} else {
 			si.On("SignUp", mock.Anything).Return(nil).Once()
 		}
@@ -69,11 +70,16 @@ func TestSingUp(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		e := echo.New()
+		m := middleware.NewMiddleware(nil)
 		ctx := e.NewContext(r, w)
 		h := handler.NewUserUC(nil, si)
-		if assert.NoError(h.SignUp(ctx)) {
-			assert.Equal(ctx.Response().Status, tt.wantCode)
+		gotErr := h.SignUp(ctx)
+		if gotErr != nil {
+			m.Errors(gotErr, ctx)
 		}
+
+		assert.Equal(tt.wantCode, ctx.Response().Status)
+
 	}
 }
 

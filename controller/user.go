@@ -1,22 +1,22 @@
 package controller
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 	"users-service/model"
+	"users-service/pkg"
 )
 
 var (
-	ErrEmailNotValid      = errors.New("email not valid")
-	ErrPasswordNotValid   = errors.New("password not valid")
-	ErrEmailAlreadyInUsed = errors.New("email already in use")
-	ErrWrongPassword      = errors.New("wrong password")
-	ErrUserNotFound       = errors.New("user not found")
-	ErrCodeNotFound       = errors.New("code not found")
-	ErrExpiredCode        = errors.New("expired code")
-	ErrInvalidCode        = errors.New("invalid code")
+	ErrEmailNotValid      = pkg.BadErr("email not valid")
+	ErrPasswordNotValid   = pkg.BadErr("password not valid")
+	ErrEmailAlreadyInUsed = pkg.BadErr("email already in use")
+	ErrWrongPassword      = pkg.BadErr("wrong password")
+	ErrUserNotFound       = pkg.BadErr("user not found")
+	ErrCodeNotFound       = pkg.BadErr("code not found")
+	ErrExpiredCode        = pkg.BadErr("expired code")
+	ErrInvalidCode        = pkg.BadErr("invalid code")
 )
 
 type UserStorager interface {
@@ -55,7 +55,7 @@ func (st UserService) Data(ID uint) (model.User, error) {
 
 func (st UserService) Verify(userID uint, code string) error {
 	if code == "" {
-		return ErrNullCode
+		return ErrNullValue
 	}
 	ver, err := st.ver.Find(userID)
 	if err != nil {

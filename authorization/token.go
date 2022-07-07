@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"users-service/pkg"
 
 	"github.com/gbrlsnchs/jwt"
 )
@@ -13,7 +14,8 @@ const (
 )
 
 var (
-	ErrNullToken = errors.New("null token")
+	ErrNullToken    = errors.New("null token")
+	ErrInvalidToken = pkg.UnauthorizedErr("invalid token")
 )
 
 type Token struct {
@@ -27,7 +29,7 @@ func NewToken() Token {
 // GenerateToken .
 func (to Token) Create(uid, utp uint) (string, error) {
 	claim := jwt.Options{
-		ExpirationTime: time.Now().Add(15 * time.Minute),
+		ExpirationTime: time.Now().Add(150 * time.Minute),
 		Issuer:         iss,
 		Public:         map[string]interface{}{"uid": uid, "utp": utp},
 	}
@@ -60,7 +62,7 @@ func (to Token) CreateRefresh(id, uid uint, fgp *string) (string, error) {
 // ValidateToken .
 func (to Token) Validate(t *string) (*jwt.JWT, error) {
 	if t == nil {
-		return nil, ErrNullToken
+		return nil, pkg.UnauthorizedErr("null token")
 	}
 	jot, err := jwt.FromString(*t)
 	if err != nil {
@@ -71,6 +73,9 @@ func (to Token) Validate(t *string) (*jwt.JWT, error) {
 		return &jwt.JWT{}, fmt.Errorf("error at jot.Verify : %w", err)
 	}
 	err = jot.Validate(jwt.ExpirationTimeValidator(time.Now()), jwt.IssuerValidator(iss), jwt.AlgorithmValidator(jwt.MethodRS512))
+	if err != nil {
+		return nil, fmt.Errorf("%w, %v", ErrInvalidToken, err)
+	}
 	return jot, err
 }
 

@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	ErrUserNotLoggedIn      = errors.New("user is not logged in")
-	ErrBearerTokenNotFormat = errors.New("bearer token not in proper format")
+	ErrUserNotLoggedIn      = pkg.UnauthorizedErr("user is not logged in")
+	ErrBearerTokenNotFormat = pkg.UnauthorizedErr("bearer token not in proper format")
 )
 
 type Validater interface {
@@ -24,8 +24,75 @@ type Middleware struct {
 	va Validater
 }
 
+type IsForbiddener interface {
+	IsForbidden()
+}
+
+type IsBadder interface {
+	IsBad()
+}
+
+type IsUnauthorizeder interface {
+	IsUnauthorized()
+}
+
+type IsNotFounder interface {
+	IsNotFound()
+}
+
 func NewMiddleware(va Validater) Middleware {
 	return Middleware{va: va}
+}
+
+func findError(err error) (int, error) {
+	temp := err
+	for temp != nil {
+		switch temp.(type) {
+		case IsBadder:
+			return http.StatusBadRequest, temp
+		case IsUnauthorizeder:
+			return http.StatusUnauthorized, temp
+		case IsForbiddener:
+			return http.StatusForbidden, temp
+
+		case IsNotFounder:
+			return http.StatusNotFound, temp
+		}
+		temp = errors.Unwrap(temp)
+	}
+	return http.StatusInternalServerError, nil
+}
+
+// Errors handler all errors and checks them to return an response error
+func (mid Middleware) Errors(err error, c echo.Context) {
+	var msg interface{}
+
+	code, gErr := findError(err)
+	if gErr != nil {
+		msg = gErr.Error()
+	} else {
+		msg = http.StatusText(code)
+	}
+
+	if _, ok := msg.(string); ok {
+		msg = map[string]interface{}{"message": msg}
+	}
+	// Log error
+	//c.Logger().Error(err)
+
+	if !c.Response().Committed {
+		// Return response with message in JSON
+		if c.Request().Method == http.MethodHead {
+			err = c.NoContent(code)
+		} else {
+			err = c.JSON(code, msg)
+		}
+		if err != nil {
+			// Log new error
+			c.Logger().Error(err)
+		}
+	}
+
 }
 
 func (mid Middleware) authentication(c echo.Context) (jwt.JWT, error) {

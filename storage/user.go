@@ -5,7 +5,6 @@ Implements UserDao interface with gorm
 */
 
 import (
-	"time"
 	"users-service/model"
 
 	"gorm.io/gorm"
@@ -20,7 +19,7 @@ func NewUserStore() userStore {
 }
 
 func (us userStore) Update(user *model.User) error {
-	user.UpdatedAt = time.Time{}
+	user.UpdatedAt = nil
 	res := us.db.Model(user).Select("name", "birth_date", "url", "updated_at").Updates(user)
 	return getErrorFromResult(res)
 }
@@ -32,13 +31,14 @@ func (us userStore) Verify(userID uint) error {
 
 func (us userStore) Find(id uint) (model.User, error) {
 	user := model.User{}
-	res := us.db.Where("id = ?", id).Omit("password").First(&user)
+	res := us.db.Model(&user).Where("id = ?", id).
+		Select("id", "name", "birth_date", "url", "email", "is_verified").First(&user)
 	return user, getErrorFromResult(res)
 }
 
 func (us userStore) Create(user *model.User) error {
-	user.CreatedAt = time.Time{}
-	user.UpdatedAt = time.Time{}
+	user.CreatedAt = nil
+	user.UpdatedAt = nil
 	user.ID = 0
 	user.IsVerified = false
 	user.RoleID = 0

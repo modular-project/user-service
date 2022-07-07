@@ -3,9 +3,14 @@ package storage
 import (
 	"fmt"
 	"sync"
+	"users-service/pkg"
 )
 
 var once sync.Once
+
+var (
+	ErrNotFound = pkg.NotFoundErr("not found")
+)
 
 type DBConnection struct {
 	TypeDB   DRIVER

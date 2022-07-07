@@ -76,13 +76,13 @@ func (_m *EMPLService) HireWaiter(_a0 uint, _a1 string, _a2 float64) error {
 	return r0
 }
 
-// Search provides a mock function with given fields: _a0
-func (_m *EMPLService) Search(_a0 *model.SearchEMPL) ([]model.User, error) {
-	ret := _m.Called(_a0)
+// Search provides a mock function with given fields: _a0, _a1
+func (_m *EMPLService) Search(_a0 uint, _a1 *model.SearchEMPL) ([]model.User, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 []model.User
-	if rf, ok := ret.Get(0).(func(*model.SearchEMPL) []model.User); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(uint, *model.SearchEMPL) []model.User); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.User)
@@ -90,8 +90,8 @@ func (_m *EMPLService) Search(_a0 *model.SearchEMPL) ([]model.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*model.SearchEMPL) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(uint, *model.SearchEMPL) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}

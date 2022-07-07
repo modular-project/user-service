@@ -6,7 +6,6 @@ import (
 	"users-service/controller"
 	"users-service/mocks"
 	"users-service/model"
-	"users-service/pkg"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -23,7 +22,7 @@ func TestGenerateCode(t *testing.T) {
 		wantErr error
 	}{
 		{1, nil},
-		{2, pkg.ErrNoRowsAffected},
+		{2, errors.New("not found")},
 	}
 
 	for _, tt := range tests {
