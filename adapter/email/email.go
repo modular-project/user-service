@@ -175,8 +175,11 @@ func (m Mail) sendMessage(message string, to, from mail.Address) error {
 }
 
 func (m Mail) Confirm(dest, code string) error {
-	if dest == "" || code == "" {
-		return pkg.ErrNullValue
+	if code == "" {
+		return pkg.BadErr("empty code")
+	}
+	if dest == "" {
+		return pkg.BadErr("empty addressee")
 	}
 	from := mail.Address{
 		Name:    app,
@@ -196,7 +199,7 @@ func (m Mail) Confirm(dest, code string) error {
 		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 	message += "\r\n"
-	t, err := template.ParseFiles("templates/confirm.html")
+	t, err := template.ParseFiles("web/confirm.html")
 	if err != nil {
 		return err
 	}

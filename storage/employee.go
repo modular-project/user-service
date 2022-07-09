@@ -16,7 +16,7 @@ func NewEMPLStore() emplStore {
 	return emplStore{db: _db}
 }
 
-func (es emplStore) Get(uID uint) (model.UserJobs, error) {
+func (es emplStore) Self(uID uint) (model.UserJobs, error) {
 	uj := model.UserJobs{}
 	res := es.db.Where("id = ?", uID).
 		Select("email", "id", "url", "name", "birth_date", "is_verified").First(&uj.User)
@@ -31,11 +31,32 @@ func (es emplStore) Get(uID uint) (model.UserJobs, error) {
 	}
 	return uj, nil
 }
+
+func (es emplStore) Get(from *model.UserRole, target uint) (model.UserJobs, error) {
+	uj := model.UserJobs{}
+	res := es.db.Where("id = ?", target).
+		Select("email", "id", "url", "name", "birth_date", "is_verified").First(&uj.User)
+	err := getErrorFromResult(res)
+	if err != nil {
+		return model.UserJobs{}, fmt.Errorf("find user by id, %w", err)
+	}
+	res = es.db.Model(&model.UserRole{}).Where("user_id = ?", target).Where("role_id = ?", from.RoleID)
+	if from.EstablishmentID != 0 {
+		res = res.Where("establishment_id = ?", from.EstablishmentID) //Check business logic
+	}
+	res = res.Find(&uj.Jobs)
+	err = getErrorFromResult(res)
+	if err != nil {
+		return model.UserJobs{}, fmt.Errorf("get jobs, %w", err)
+	}
+	return uj, nil
+}
+
 func (es emplStore) SearchWaiters(estID uint, s *model.Search) ([]model.User, error) {
 	q := s.Query()
 	users := []model.User{}
 	tx := es.db.Model(&users).Select("users.id", "users.email", "users.name").
-		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id").Where("r.establishment_id = ? AND r.role_id = 4 AND r.is_active = true", estID)
+		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id").Where("r.establishment_id = ? AND r.role_id = ? AND r.is_active = true", estID, model.WAITER)
 
 	//tx := es.db.Where("establishment_id = ?", estID)
 	if q != "" {
@@ -143,6 +164,6 @@ func (es emplStore) Hire(ur *model.UserRole) error {
 }
 
 func (es emplStore) Fire(uID uint) error {
-	res := es.db.Where("user_id =? AND is_active = true").Update("is_active", false)
+	res := es.db.Model(&model.UserRole{}).Where("user_id =? AND is_active = true", uID).Update("is_active", false)
 	return getErrorFromResult(res)
 }

@@ -117,7 +117,8 @@ func main() {
 	to := authorization.NewToken()
 	us := controller.NewUserService(storage.NewUserStore(), storage.NewVerifyStore(), email.NewMail())
 	ss := controller.NewSignService(storage.NewRefreshStore(), controller.NewUserValidate(), storage.NewUserSignStore(), to)
-	per := controller.NewPermission(storage.NewJobStore())
+	job := storage.NewJobStore()
+	per := controller.NewPermission(job)
 	es := controller.NewEmployeeService(storage.NewEMPLStore(), storage.NewUserStore(), per)
 	// Start GRPC clients
 	do := grpc.WithTransportCredentials(insecure.NewCredentials())
@@ -129,14 +130,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("no se logro realizar la conexion: %v", err)
 	}
+	ts := info.NewTableService(conn, job)
 	// Create Custon Middleware
 	mid := mdw.NewMiddleware(to)
 	// Create Use Cases
 	uUC := handler.NewUserUC(us, ss)
 	eUC := handler.NewEMPLUC(es)
 	pUC := handler.NewProductUC(ps)
+	tUC := handler.NewTableUC(ts)
 	// Create routes
-	r := route.NewRouter(mid, uUC, eUC, pUC)
+	r := route.NewRouter(mid, uUC, eUC, pUC, tUC)
 	// Start server
 	e := echo.New()
 	e.Use(middleware.Recover())

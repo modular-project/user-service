@@ -28,7 +28,7 @@ func (js jobStore) Find(email string) (model.User, error) {
 
 func (js jobStore) Job(uID uint) (model.UserRole, error) {
 	r := model.UserRole{}
-	res := js.db.Where("user_id = ?", uID).Select("user_id, role_id, establishment_id, is_active").First(&r)
+	res := js.db.Where("user_id = ? and is_active = true", uID).Select("user_id, role_id, establishment_id, is_active").First(&r)
 	return r, getErrorFromResult(res)
 }
 

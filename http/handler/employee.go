@@ -11,7 +11,8 @@ import (
 
 type EMPLService interface {
 	Update(from, target uint, u *model.User) error
-	Get(uint) (model.UserJobs, error)
+	Self(uint) (model.UserJobs, error)
+	Get(from, target uint) (model.UserJobs, error)
 	Search(uint, *model.SearchEMPL) ([]model.User, error)
 	SearchWaiters(uint, *model.Search) ([]model.User, error)
 	Hire(uint, string, *model.UserRole) error
@@ -86,11 +87,15 @@ func (eu EMPLuc) SearchWaiters(c echo.Context) error {
 }
 
 func (eu EMPLuc) GetByID(c echo.Context) error {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
+	t, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
 		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
 	}
-	uj, err := eu.es.Get(uint(id))
+	f, err := getUserIDFromContext(c)
+	if err != nil {
+		return err
+	}
+	uj, err := eu.es.Get(f, uint(t))
 	if err != nil {
 		return err
 	}
@@ -102,7 +107,7 @@ func (eu EMPLuc) Get(c echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
 	}
-	uj, err := eu.es.Get(id)
+	uj, err := eu.es.Self(id)
 	if err != nil {
 		return err
 	}

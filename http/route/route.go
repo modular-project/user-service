@@ -12,15 +12,26 @@ type route struct {
 	uuc handler.UserUC
 	euc handler.EMPLuc
 	puc handler.ProductUC
+	tuc handler.TableUC
 }
 
-func NewRouter(mid middleware.Middleware, uuc handler.UserUC, euc handler.EMPLuc, puc handler.ProductUC) route {
+func NewRouter(mid middleware.Middleware, uuc handler.UserUC, euc handler.EMPLuc, puc handler.ProductUC, tuc handler.TableUC) route {
 	return route{
 		uuc: uuc,
 		mid: mid,
 		euc: euc,
 		puc: puc,
+		tuc: tuc,
 	}
+}
+
+func (r route) table(e *echo.Echo) {
+	g := e.Group("api/v1/table", r.mid.Login)
+	g.GET("/:id", r.tuc.Get)
+	g.POST("/", r.tuc.CreateIn)
+	g.POST("/:id", r.tuc.Create)
+	g.DELETE("/", r.tuc.Delete)
+	g.DELETE("/:id", r.tuc.DeleteIn)
 }
 
 func (r route) user(e *echo.Echo) {
@@ -41,7 +52,7 @@ func (r route) employee(e *echo.Echo) {
 	g.GET("/", r.euc.Get)
 	g.GET("/:id", r.euc.GetByID)
 	g.POST("/search/", r.euc.Search)
-	g.POST("/search/waiter/", r.euc.Search)
+	g.POST("/search/waiter/", r.euc.SearchWaiters)
 	g.POST("/hire/:mail", r.euc.Hire)
 	g.POST("/hire/waiter/:mail", r.euc.HireWaiter)
 	g.PATCH("/fire/:id", r.euc.Fire)
@@ -56,7 +67,7 @@ func (r route) product(e *echo.Echo) {
 	g.GET("/:id", r.puc.Get)
 	g.GET("/batch/", r.puc.GetInBatch)
 	g.POST("/", r.puc.Create)
-	g.PUT("/", r.puc.Update)
+	g.PUT("/:id", r.puc.Update)
 	g.DELETE("/:id", r.puc.Delete)
 }
 
@@ -65,4 +76,5 @@ func (r route) Start(e *echo.Echo) {
 	r.user(e)
 	r.employee(e)
 	r.product(e)
+	r.table(e)
 }

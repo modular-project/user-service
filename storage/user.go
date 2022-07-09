@@ -31,8 +31,12 @@ func (us userStore) Verify(userID uint) error {
 
 func (us userStore) Find(id uint) (model.User, error) {
 	user := model.User{}
-	res := us.db.Model(&user).Where("id = ?", id).
-		Select("id", "name", "birth_date", "url", "email", "is_verified").First(&user)
+	res := us.db.Model(&user).
+		Select("users.id", "users.name", "users.birth_date", "users.url", "users.email", "users.is_verified",
+			"r.role_id, r.establishment_id").
+		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id AND r.is_active = true").
+		Where("users.id = ?", id).
+		First(&user)
 	return user, getErrorFromResult(res)
 }
 

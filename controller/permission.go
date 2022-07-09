@@ -31,6 +31,10 @@ func (p permission) needEstablishment(role model.RoleID) bool {
 	return true
 }
 
+func (p permission) Job(uID uint) (model.UserRole, error) {
+	return p.j.Job(uID)
+}
+
 func (p permission) Greater(uID uint, rID model.RoleID) error {
 	u, err := p.j.Job(uID)
 	if err != nil {

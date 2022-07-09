@@ -1,9 +1,12 @@
 package controller
 
-import "users-service/model"
+import (
+	"users-service/model"
+)
 
 type EMPLStorager interface {
-	Get(uint) (model.UserJobs, error)
+	Self(uint) (model.UserJobs, error)
+	Get(from *model.UserRole, target uint) (model.UserJobs, error)
 	SearchWaiters(uint, *model.Search) ([]model.User, error)
 	Search(*model.SearchEMPL) ([]model.User, error)
 	Hire(*model.UserRole) error
@@ -15,6 +18,7 @@ type Canner interface {
 	CanHire(uint, string, *model.UserRole) error
 	Greater(uID uint, rID model.RoleID) error
 	Equal(uID uint, rID model.RoleID) (uint, error)
+	Job(uint) (model.UserRole, error)
 }
 
 type Updater interface {
@@ -43,11 +47,28 @@ func (es employeeService) Update(from, target uint, data *model.User) error {
 	return es.up.Update(data)
 }
 
-func (es employeeService) Get(userID uint) (model.UserJobs, error) {
+func (es employeeService) Self(userID uint) (model.UserJobs, error) {
 	if userID == 0 {
 		return model.UserJobs{}, ErrUserNotFound
 	}
-	return es.est.Get(userID)
+	return es.est.Self(userID)
+}
+
+func (es employeeService) Get(from, target uint) (model.UserJobs, error) {
+	if from == 0 || target == 0 {
+		return model.UserJobs{}, ErrUserNotFound
+	}
+	if from == target {
+		return es.est.Self(target)
+	}
+	fj, err := es.can.Job(from)
+	if err != nil {
+		return model.UserJobs{}, err
+	}
+	if !fj.RoleID.IsGreater(model.WAITER) {
+		return model.UserJobs{}, ErrUnauthorizedUser
+	}
+	return es.est.Get(&fj, target)
 }
 
 // WaiterSearch find all waiters in establishment
@@ -72,6 +93,8 @@ func (es employeeService) Hire(contractorID uint, email string, role *model.User
 	if err := es.can.CanHire(contractorID, email, role); err != nil {
 		return err
 	}
+
+	//TODO CHECK ESTABLISHMENT
 	return es.est.Hire(role)
 }
 
