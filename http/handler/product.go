@@ -2,9 +2,9 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 	"github.com/modular-project/protobuffers/information/product"
@@ -30,7 +30,7 @@ func NewProductUC(ps ProductServicer) ProductUC {
 func (puc ProductUC) Create(c echo.Context) error {
 	p := product.Product{}
 	if err := c.Bind(&p); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind product", err, http.StatusBadRequest)
 	}
 	id, err := puc.ps.Create(context.TODO(), &p)
 	if err != nil {
@@ -42,7 +42,7 @@ func (puc ProductUC) Create(c echo.Context) error {
 func (puc ProductUC) Get(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	p, err := puc.ps.Get(context.Background(), id)
 	if err != nil {
@@ -68,7 +68,7 @@ func (pub ProductUC) GetInBatch(c echo.Context) error {
 	}
 	var ids IDs
 	if err := c.Bind(&ids); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind ids", err, http.StatusBadRequest)
 	}
 	ps, err := pub.ps.GetInBatch(context.Background(), ids.IDs)
 	if err != nil {
@@ -83,7 +83,7 @@ func (pub ProductUC) GetInBatch(c echo.Context) error {
 func (pub ProductUC) Delete(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	err = pub.ps.Delete(context.Background(), id)
 	if err != nil {
@@ -95,11 +95,11 @@ func (pub ProductUC) Delete(c echo.Context) error {
 func (pub ProductUC) Update(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	p := product.Product{}
 	if err := c.Bind(&p); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind product", err, http.StatusBadRequest)
 	}
 	id, err = pub.ps.Update(context.Background(), id, &p)
 	if err != nil {

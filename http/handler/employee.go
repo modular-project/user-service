@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"users-service/model"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 )
@@ -31,15 +32,15 @@ func NewEMPLUC(es EMPLService) EMPLuc {
 func (eu EMPLuc) Update(c echo.Context) error {
 	u := &model.User{}
 	if err := c.Bind(u); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind user", err, http.StatusBadRequest)
 	}
 	tID, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	fID, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	err = eu.es.Update(fID, uint(tID), u)
 	if err != nil {
@@ -52,10 +53,10 @@ func (eu EMPLuc) Search(c echo.Context) error {
 	s := model.SearchEMPL{}
 	uID, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	if err := c.Bind(&s); err != nil {
-		return fmt.Errorf("%w searchEMPL, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind search", err, http.StatusBadRequest)
 	}
 	users, err := eu.es.Search(uID, &s)
 	if err != nil {
@@ -70,11 +71,11 @@ func (eu EMPLuc) Search(c echo.Context) error {
 func (eu EMPLuc) SearchWaiters(c echo.Context) error {
 	s := model.Search{}
 	if err := c.Bind(&s); err != nil {
-		return fmt.Errorf("%w search, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind search", err, http.StatusBadRequest)
 	}
 	uID, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	users, err := eu.es.SearchWaiters(uID, &s)
 	if err != nil {
@@ -89,7 +90,7 @@ func (eu EMPLuc) SearchWaiters(c echo.Context) error {
 func (eu EMPLuc) GetByID(c echo.Context) error {
 	t, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	f, err := getUserIDFromContext(c)
 	if err != nil {
@@ -105,7 +106,7 @@ func (eu EMPLuc) GetByID(c echo.Context) error {
 func (eu EMPLuc) Get(c echo.Context) error {
 	id, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	uj, err := eu.es.Self(id)
 	if err != nil {
@@ -118,11 +119,11 @@ func (eu EMPLuc) HireWaiter(c echo.Context) error {
 	mail := c.Param("mail")
 	r := model.UserRole{}
 	if err := c.Bind(&r); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind role", err, http.StatusBadRequest)
 	}
 	id, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	if err = eu.es.HireWaiter(id, mail, r.Salary); err != nil {
 		return err
@@ -134,11 +135,11 @@ func (eu EMPLuc) Hire(c echo.Context) error {
 	mail := c.Param("mail")
 	r := model.UserRole{}
 	if err := c.Bind(&r); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind role", err, http.StatusBadRequest)
 	}
 	id, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	if err = eu.es.Hire(id, mail, &r); err != nil {
 		return fmt.Errorf("fail at hire: %w", err)
@@ -149,11 +150,11 @@ func (eu EMPLuc) Hire(c echo.Context) error {
 func (eu EMPLuc) Fire(c echo.Context) error {
 	t, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	f, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	if err = eu.es.Fire(f, uint(t)); err != nil {
 		return err

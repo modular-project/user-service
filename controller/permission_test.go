@@ -1,11 +1,15 @@
 package controller_test
 
 import (
-	"errors"
+	"fmt"
+	"net/http"
 	"testing"
 	"users-service/controller"
 	"users-service/mocks"
 	"users-service/model"
+	"users-service/pkg"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCanHire(t *testing.T) {
@@ -42,64 +46,63 @@ func TestCanHire(t *testing.T) {
 	}
 
 	tests := []struct {
-		giveID    uint
-		giveEmail string
-		giveRole  model.UserRole
-		wantErr   error
+		giveID      uint
+		giveEmail   string
+		giveRole    model.UserRole
+		wantErrCode int
 	}{
 		{
 			giveID:    1,
 			giveEmail: "user@mail.com",
 			giveRole:  model.UserRole{RoleID: model.MANAGER, EstablishmentID: 3, Salary: 140.33},
 		}, {
-			giveID:    1,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
-			wantErr:   controller.ErrEstablishNecesary,
+			giveID:      1,
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    1,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.ADMIN, EstablishmentID: 3, Salary: 140.33},
-			wantErr:   controller.ErrCannotBeAssigned,
+			giveID:      1,
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.ADMIN, EstablishmentID: 3, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    1,
-			giveEmail: "manager@mail.com",
-			giveRole:  model.UserRole{RoleID: model.WAITER, EstablishmentID: 3, Salary: 140.33},
-			wantErr:   controller.ErrAlreadyEmployee,
+			giveID:      1,
+			giveEmail:   "manager@mail.com",
+			giveRole:    model.UserRole{RoleID: model.WAITER, EstablishmentID: 3, Salary: 140.33},
+			wantErrCode: http.StatusBadRequest,
 		}, {
 			giveID:    1,
 			giveEmail: "user@mail.com",
 			giveRole:  model.UserRole{RoleID: model.ADMIN, Salary: 140.33},
 		}, {
-			giveID:    1,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.OWNER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
+			giveID:      1,
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.OWNER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    3,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.OWNER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
+			giveID:      3,
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.OWNER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    5,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.WAITER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
+			giveID:      5,
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.WAITER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
+		}, {
+			giveID:      2,
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
 			giveID:    2,
 			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
-		}, {
-			giveID:    2,
-			giveEmail: "user@mail.com",
 			giveRole:  model.UserRole{RoleID: model.WAITER, Salary: 140.33},
-			wantErr:   nil,
 		}, {
-			giveID:    1,
-			giveEmail: "noverified@mail.com",
-			giveRole:  model.UserRole{RoleID: model.ADMIN, Salary: 140.33},
-			wantErr:   controller.ErrUserIsNotVerified,
+			giveID:      1,
+			giveEmail:   "noverified@mail.com",
+			giveRole:    model.UserRole{RoleID: model.ADMIN, Salary: 140.33},
+			wantErrCode: http.StatusBadRequest,
 		},
 	}
 	uByID := make(map[uint]*model.User, len(users))
@@ -126,12 +129,9 @@ func TestCanHire(t *testing.T) {
 			IsActive:   uEmail.IsActive,
 		}, nil)
 		err := p.CanHire(tt.giveID, tt.giveEmail, &tt.giveRole)
-		if !errors.Is(err, tt.wantErr) {
-			t.Logf("%d - %d: %s", i, tt.giveID, tt.giveEmail)
-			t.Errorf("got error: %s, want error: %s", err, tt.wantErr)
-		} else {
-			j.ExpectedCalls = nil
-		}
+		code, _ := pkg.FindError(err)
+		assert.Equal(t, tt.wantErrCode, code, fmt.Sprintf("Index: %d, uID: %d, email: %s", i, tt.giveID, tt.giveEmail))
+		j.ExpectedCalls = nil
 	}
 
 }

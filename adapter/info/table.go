@@ -3,6 +3,7 @@ package info
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"users-service/model"
 	"users-service/pkg"
 
@@ -29,16 +30,16 @@ func NewTableService(conn *grpc.ClientConn, pe Permissioner) tableService {
 func (ts tableService) inEstablishment(uID uint, eID uint64) (uint64, error) {
 	u, err := ts.pe.Job(uID)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("ts.pe.Job: %w", err)
 	}
 	// Check role and switch establishment ID
 	if u.RoleID == model.MANAGER {
 		eID = uint64(u.EstablishmentID)
 	} else if !u.RoleID.IsGreater(model.MANAGER) {
-		return 0, pkg.BadErr("you don't have the necessary role")
+		return 0, pkg.NewAppError("you don't have permission", nil, http.StatusForbidden)
 	}
 	if eID == 0 {
-		return 0, pkg.NotFoundErr("establishment not found")
+		return 0, pkg.NewAppError("establishment not found", nil, http.StatusBadRequest)
 	}
 	return eID, nil
 }
@@ -49,11 +50,11 @@ func (ts tableService) inEstablishment(uID uint, eID uint64) (uint64, error) {
 func (ts tableService) Delete(ctx context.Context, uID uint, eID uint64, qua uint32) (uint32, error) {
 	eID, err := ts.inEstablishment(uID, eID)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("in establishment: %w", err)
 	}
 	r, err := ts.tc.RemoveFromEstablishment(ctx, &table.RequestDelete{EstablishmenId: eID, Quantity: qua})
 	if err != nil {
-		return 0, fmt.Errorf("remove from est: %w", err)
+		return 0, pkg.NewAppError("failed to remove tables", nil, http.StatusInternalServerError)
 	}
 	return r.Deleted, nil
 }
@@ -62,12 +63,12 @@ func (ts tableService) Delete(ctx context.Context, uID uint, eID uint64, qua uin
 func (ts tableService) Create(ctx context.Context, uID uint, eID uint64) (uint64, error) {
 	eID, err := ts.inEstablishment(uID, eID)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("in establishment: %w", err)
 	}
 	// Call grpc service
 	r, err := ts.tc.AddTable(ctx, &table.RequestById{Id: eID})
 	if err != nil {
-		return 0, fmt.Errorf("add table: %w", err)
+		return 0, pkg.NewAppError("failed to add table", err, http.StatusInternalServerError)
 	}
 	if r.Ids == nil {
 		return 0, nil
@@ -78,14 +79,11 @@ func (ts tableService) Create(ctx context.Context, uID uint, eID uint64) (uint64
 func (ts tableService) CreateInBatch(ctx context.Context, uID uint, eID uint64, qua uint32) ([]uint64, error) {
 	eID, err := ts.inEstablishment(uID, eID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("in establishment: %w", err)
 	}
 	r, err := ts.tc.AddTables(ctx, &table.RequestAdd{Id: eID, Quantity: qua})
 	if err != nil {
-		return nil, fmt.Errorf("add tables: %w", err)
-	}
-	if r.Ids == nil {
-		return nil, nil
+		return nil, pkg.NewAppError("failed to add tables", err, http.StatusInternalServerError)
 	}
 	return r.Ids, nil
 }
@@ -93,10 +91,7 @@ func (ts tableService) CreateInBatch(ctx context.Context, uID uint, eID uint64, 
 func (ts tableService) GetFromEstablishment(ctx context.Context, eID uint64) ([]*table.Table, error) {
 	r, err := ts.tc.GetFromEstablishment(ctx, &table.RequestById{Id: eID})
 	if err != nil {
-		return nil, fmt.Errorf("get tables: %w", err)
-	}
-	if r.Tables == nil {
-		return nil, nil
+		return nil, pkg.NewAppError("failed to get tables", err, http.StatusInternalServerError)
 	}
 	return r.Tables, nil
 }
@@ -105,19 +100,19 @@ func (ts tableService) GetFromEstablishment(ctx context.Context, eID uint64) ([]
 // Table status change automatically when an order is created or finished
 func (ts tableService) ChangeStatus(ctx context.Context, t *table.Table) error {
 	if t.Id == 0 {
-		return pkg.BadErr("table id not set")
+		return pkg.NewAppError("table id not set", nil, http.StatusBadRequest)
 	}
 	u, err := ts.pe.Job(uint(t.UserId))
 	if err != nil {
-		return err
+		return fmt.Errorf("ts.pe.Job: %w", err)
 	}
 	if u.EstablishmentID == 0 {
-		return pkg.ForbiddenErr("you have to be in an establishment")
+		return pkg.NewAppError("you have to be in an establishment", nil, http.StatusBadRequest)
 	}
 	t.EstablishmenId = uint64(u.EstablishmentID)
 	_, err = ts.tc.ChangeStatus(ctx, t)
 	if err != nil {
-		return fmt.Errorf("change table status: %w", err)
+		return pkg.NewAppError("failed to change table status", err, http.StatusInternalServerError)
 	}
 	return nil
 }

@@ -57,7 +57,7 @@ func TestSingUp(t *testing.T) {
 		si := mocks.NewSignUCer(t)
 		assert := assert.New(t)
 		if tt.wantCode != http.StatusCreated {
-			si.On("SignUp", mock.Anything).Return(pkg.BadErr("bad request")).Once()
+			si.On("SignUp", mock.Anything).Return(pkg.NewAppError("Fail at sing up", nil, http.StatusBadRequest)).Once()
 		} else {
 			si.On("SignUp", mock.Anything).Return(nil).Once()
 		}

@@ -1,45 +1,52 @@
 package pkg
 
-// var (
-// 	ErrNoRowsAffected error = errors.New("no rows affected")
-// 	ErrNullValue            = errors.New("null value")
-// )
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
 
 const (
 	USER UserType = iota + 1
 	KITCHEN
 )
 
+var (
+	ErrNoRowsAffected = errors.New("no rows affected")
+)
+
 type UserType int
 
-type UnauthorizedErr string
-
-type BadErr string
-
-type ForbiddenErr string
-
-type NotFoundErr string
-
-func (f ForbiddenErr) Error() string {
-	return string(f)
+type AppError struct {
+	MSG  string
+	Err  error
+	Code int
 }
 
-func (f ForbiddenErr) IsForbidden() {}
-
-func (u UnauthorizedErr) Error() string {
-	return string(u)
+func (ae AppError) Error() string {
+	if ae.Err == nil {
+		return ae.MSG
+	}
+	return fmt.Sprintf("%v: %v", ae.MSG, ae.Err)
 }
 
-func (u UnauthorizedErr) IsUnauthorized() {}
-
-func (b BadErr) Error() string {
-	return string(b)
+func NewAppError(msg string, err error, code int) error {
+	return &AppError{MSG: msg, Err: err, Code: code}
 }
 
-func (b BadErr) IsBad() {}
-
-func (n NotFoundErr) Error() string {
-	return string(n)
+// FindError give an error try to find an http status code and message inside it
+// If an *AppError is not wraped so returns internal server status code and an empty message
+func FindError(err error) (int, string) {
+	if err == nil {
+		return 0, ""
+	}
+	temp := err
+	for temp != nil {
+		if ae, ok := temp.(*AppError); ok {
+			return ae.Code, ae.MSG
+		}
+		temp = errors.Unwrap(temp)
+	}
+	code := http.StatusInternalServerError
+	return code, ""
 }
-
-func (n NotFoundErr) IsNotFound() {}

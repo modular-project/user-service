@@ -145,8 +145,6 @@ github.com/mattn/go-isatty v0.0.7/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hd
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mattn/go-isatty v0.0.14 h1:yVuAays6BHfxijgZPzw+3Zlu5yQgKGP2/hcQbHb7S9Y=
 github.com/mattn/go-isatty v0.0.14/go.mod h1:7GGIvUiUoEMVVmxf/4nioHXj79iQHKdU27kJ6hsGG94=
-github.com/modular-project/protobuffers v0.0.0-20220606222103-bafebc4b0ada h1:Sz+h5pMXkGpDRm2h8C9A16qEPY8wuF21QZbZbooElGQ=
-github.com/modular-project/protobuffers v0.0.0-20220606222103-bafebc4b0ada/go.mod h1:A6qBaXQhNp1BNqSqi4IbpNQ17cjdB8qEpYeJKaslnOw=
 github.com/modular-project/protobuffers v0.0.0-20220707183935-ff2d20f29ab0 h1:TIVIrJJKbXcbYjykRN4ctDI2JCEg5sRyPoFvePYeshI=
 github.com/modular-project/protobuffers v0.0.0-20220707183935-ff2d20f29ab0/go.mod h1:A6qBaXQhNp1BNqSqi4IbpNQ17cjdB8qEpYeJKaslnOw=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 	"github.com/modular-project/protobuffers/information/table"
@@ -31,7 +32,7 @@ func params(c echo.Context) (uint64, uint, error) {
 	}
 	uID, err := getUserIDFromContext(c)
 	if err != nil {
-		return 0, 0, fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return 0, 0, err
 	}
 	return q, uID, nil
 }
@@ -39,7 +40,7 @@ func params(c echo.Context) (uint64, uint, error) {
 func (tu TableUC) Create(c echo.Context) error {
 	eID, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 
 	q, uID, err := params(c)
@@ -74,7 +75,7 @@ func (tu TableUC) CreateIn(c echo.Context) error {
 func (tu TableUC) Delete(c echo.Context) error {
 	eID, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 
 	q, uID, err := params(c)
@@ -105,7 +106,7 @@ func (tu TableUC) DeleteIn(c echo.Context) error {
 func (tu TableUC) Get(c echo.Context) error {
 	eID, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetParamFromPath, err)
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	ta, err := tu.ts.GetFromEstablishment(context.Background(), eID)
 	if err != nil {

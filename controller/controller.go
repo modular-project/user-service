@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/base64"
 	"math/rand"
+	"net/http"
 	"net/mail"
 	"time"
 	"unicode"
@@ -21,16 +22,7 @@ const (
 )
 
 var (
-	ErrRefreshTokenNotFound = pkg.UnauthorizedErr("refresh token not found")
-	ErrInvalidRefreshToken  = pkg.UnauthorizedErr("invalid refresh token")
-	ErrUnauthorizedUser     = pkg.ForbiddenErr("unauthorized user")
-	ErrAlreadyEmployee      = pkg.BadErr("user is already an employee")
-	ErrIsNotAnEmployee      = pkg.BadErr("user is not an employee")
-	ErrUserIsNotVerified    = pkg.BadErr("user is not verified")
-	ErrNullValue            = pkg.BadErr("null value")
-	ErrInvalidSalary        = pkg.BadErr("invalid salary")
-	ErrEstablishNecesary    = pkg.BadErr("an establishment is necesarry")
-	ErrCannotBeAssigned     = pkg.BadErr("cannot be assigned to the establishment")
+	ErrUserNotFound = pkg.NewAppError("user not found", nil, http.StatusBadRequest)
 )
 
 // Generate a random string with size

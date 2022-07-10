@@ -3,12 +3,12 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 	"users-service/mocks"
 	"users-service/model"
 	"users-service/pkg"
-	"users-service/storage"
 
 	"github.com/gbrlsnchs/jwt"
 	"github.com/stretchr/testify/assert"
@@ -17,18 +17,17 @@ import (
 
 func TestValidateRefreshToken(t *testing.T) {
 	tests := []struct {
-		give    string
-		WantID  uint
-		WantErr error
+		give     string
+		WantID   uint
+		WantCode int
 	}{
 		{
-			give:    "OK",
-			WantID:  1,
-			WantErr: nil,
+			give:   "OK",
+			WantID: 1,
 		}, {
-			give:    "Bad",
-			WantID:  0,
-			WantErr: ErrInvalidRefreshToken,
+			give:     "Bad",
+			WantID:   0,
+			WantCode: http.StatusBadRequest,
 		},
 	}
 	for _, tt := range tests {
@@ -50,11 +49,10 @@ func TestValidateRefreshToken(t *testing.T) {
 		to.On("Validate", mock.Anything).Return(jt, nil)
 		re.On("Find", mock.Anything).Return(model.Refresh{Hash: "OK"}, nil)
 		ss := NewSignService(re, nil, nil, to)
-		gotID, gotErr := ss.validateRefreshToken(&tt.give)
+		gotID, err := ss.validateRefreshToken(&tt.give)
+		gotCode, _ := pkg.FindError(err)
 		assert.Equal(t, gotID, tt.WantID)
-		if !errors.Is(gotErr, tt.WantErr) {
-			t.Errorf("got err: %s, want err: %s", gotErr, tt.WantErr)
-		}
+		assert.Equal(t, tt.WantCode, gotCode)
 	}
 }
 
@@ -110,23 +108,23 @@ func TestVerify(t *testing.T) {
 	tests := []struct {
 		giveUID  uint
 		giveCode string
-		wantErr  error
+		wantCode int
 	}{
 		{
 			giveUID:  1,
 			giveCode: "CODEBAD",
-			wantErr:  ErrInvalidCode,
+			wantCode: http.StatusBadRequest,
 		}, {
 			giveUID:  1,
 			giveCode: "CODEOK",
 		}, {
 			giveUID:  2,
 			giveCode: "CODEOK",
-			wantErr:  errNotFound,
+			wantCode: http.StatusBadRequest,
 		}, {
 			giveUID:  3,
 			giveCode: "EXPIREDCODE",
-			wantErr:  ErrExpiredCode,
+			wantCode: http.StatusBadRequest,
 		},
 	}
 	ust := mocks.NewUserStorager(t)
@@ -138,11 +136,9 @@ func TestVerify(t *testing.T) {
 	ust.On("Verify", mock.Anything).Return(nil)
 	us := NewUserService(ust, ver, nil)
 	for _, tt := range tests {
-		gotErr := us.Verify(tt.giveUID, tt.giveCode)
-		if !errors.Is(gotErr, tt.wantErr) {
-			t.Logf("code: %s,uID:  %d", tt.giveCode, tt.giveUID)
-			t.Errorf("got error: %s, want error: %s", gotErr, tt.wantErr)
-		}
+		err := us.Verify(tt.giveUID, tt.giveCode)
+		gotCode, _ := pkg.FindError(err)
+		assert.Equal(t, tt.wantCode, gotCode)
 	}
 }
 
@@ -158,7 +154,7 @@ func TestIsNotFoundErr(t *testing.T) {
 		{
 			name: "true",
 			args: args{
-				err: fmt.Errorf("this is a test: %w", storage.ErrNotFound),
+				err: fmt.Errorf("this is a test: %w", pkg.ErrNoRowsAffected),
 			},
 			want: true,
 		}, {
@@ -175,7 +171,7 @@ func TestIsNotFoundErr(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isNotFoundErr(tt.args.err); got != tt.want {
+			if got := errors.Is(tt.args.err, pkg.ErrNoRowsAffected); got != tt.want {
 				t.Errorf("ispkg.NotFoundErr() = %v, want %v", got, tt.want)
 			}
 		})
