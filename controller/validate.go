@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"net/http"
 	"users-service/model"
 	"users-service/pkg"
 )
@@ -15,10 +16,10 @@ func NewUserValidate() userValidate {
 
 func (uv userValidate) Validate(l *model.LogIn) error {
 	if ok := isEmailValid(l.User); !ok {
-		return ErrEmailNotValid
+		return pkg.NewAppError("invalid email", nil, http.StatusBadRequest)
 	}
 	if ok := isPasswordValid(l.Password); !ok {
-		return ErrPasswordNotValid
+		return pkg.NewAppError("invalid password", nil, http.StatusBadRequest)
 	}
 	return nil
 }

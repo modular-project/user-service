@@ -1,8 +1,13 @@
 package controller
 
 import (
-	"fmt"
+	"net/http"
 	"users-service/model"
+	"users-service/pkg"
+)
+
+var (
+	ErrDontHavePermission = pkg.NewAppError("you don't have permission", nil, http.StatusForbidden)
 )
 
 type JobStorager interface {
@@ -20,7 +25,11 @@ func NewPermission(j JobStorager) permission {
 }
 
 func (p permission) IsVerified(uID uint) (bool, error) {
-	return p.j.IsVerified(uID)
+	ok, err := p.j.IsVerified(uID)
+	if err != nil {
+		return false, pkg.NewAppError("user not found", err, http.StatusBadRequest)
+	}
+	return ok, nil
 }
 
 func (p permission) needEstablishment(role model.RoleID) bool {
@@ -31,51 +40,59 @@ func (p permission) needEstablishment(role model.RoleID) bool {
 	return true
 }
 
+func (p permission) Job(uID uint) (model.UserRole, error) {
+	ur, err := p.j.Job(uID)
+	if err != nil {
+		return model.UserRole{}, pkg.NewAppError("user role not found", err, http.StatusForbidden)
+	}
+	return ur, nil
+}
+
 func (p permission) Greater(uID uint, rID model.RoleID) error {
-	u, err := p.j.Job(uID)
+	u, err := p.Job(uID)
 	if err != nil {
 		return err
 	}
 	if !u.RoleID.IsGreater(rID) {
-		return ErrUnauthorizedUser
+		return ErrDontHavePermission
 	}
 	return nil
 }
 
 // Equal Returns an error if the user does not have the role assigned, otherwise it returns the establishment ID with a null error
 func (p permission) Equal(uID uint, rID model.RoleID) (uint, error) {
-	u, err := p.j.Job(uID)
+	u, err := p.Job(uID)
 	if err != nil {
 		return 0, err
 	}
 	if u.RoleID != rID {
-		return 0, ErrUnauthorizedUser
+		return 0, ErrDontHavePermission
 	}
 	return u.EstablishmentID, nil
 }
 
 func (p permission) CanUpdate(from, target uint) error {
-	f, err := p.j.Job(from)
+	f, err := p.Job(from)
 	if err != nil {
 		return err
 	}
 	if !f.RoleID.IsGreater(model.WAITER) {
-		return ErrUnauthorizedUser
+		return ErrDontHavePermission
 	}
-	t, err := p.j.Job(target)
+	t, err := p.Job(target)
 	if err != nil {
 		return err
 	}
 	if t.RoleID == model.USER {
-		return ErrIsNotAnEmployee
+		return pkg.NewAppError("target is not a employee", nil, http.StatusBadRequest)
 	}
 	if !f.RoleID.IsGreater(t.RoleID) {
-		return ErrUnauthorizedUser
+		return ErrDontHavePermission
 	}
 	if f.EstablishmentID == 0 || f.EstablishmentID == t.EstablishmentID {
 		return nil
 	}
-	return ErrUnauthorizedUser
+	return ErrDontHavePermission
 }
 
 // CanHire return an error if contractor cannot hire the user or if user cannot be hired;
@@ -83,27 +100,27 @@ func (p permission) CanUpdate(from, target uint) error {
 // if contractor's establishment ID is non-zero, then set it in *r
 func (p permission) CanHire(con uint, email string, r *model.UserRole) error {
 	if r.Salary <= 0 {
-		return ErrInvalidSalary
+		return pkg.NewAppError("invalid salary", nil, http.StatusBadRequest)
 	}
 	// Verify if user can be an employee
 	u, err := p.j.Find(email)
 	if err != nil {
-		return fmt.Errorf("find mail %s: %w", email, err)
+		return pkg.NewAppError("email not found", err, http.StatusBadRequest)
 	}
 	if u.IsActive {
-		return ErrAlreadyEmployee
+		return pkg.NewAppError("target is already an employee", nil, http.StatusBadRequest)
 	}
 	if !u.IsVerified {
-		return ErrUserIsNotVerified
+		return pkg.NewAppError("target is not verified", nil, http.StatusBadRequest)
 	}
 	r.UserID = u.ID
 	// Verify if contractor can hire it
-	conR, err := p.j.Job(con)
+	conR, err := p.Job(con)
 	if err != nil {
 		return err
 	}
 	if !conR.RoleID.IsGreater(r.RoleID) {
-		return ErrUnauthorizedUser
+		return ErrDontHavePermission
 	}
 	// Verify if the jobs need an establishment or not
 	if conR.EstablishmentID != 0 {
@@ -111,10 +128,10 @@ func (p permission) CanHire(con uint, email string, r *model.UserRole) error {
 	}
 	need := p.needEstablishment(r.RoleID)
 	if need && r.EstablishmentID == 0 {
-		return ErrEstablishNecesary
+		return pkg.NewAppError("role needs to have an establishment", nil, http.StatusForbidden)
 	}
 	if !need && r.EstablishmentID != 0 {
-		return ErrCannotBeAssigned
+		return pkg.NewAppError("role need not have an establishment", nil, http.StatusForbidden)
 	}
 	return nil
 }

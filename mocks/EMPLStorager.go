@@ -27,20 +27,20 @@ func (_m *EMPLStorager) Fire(_a0 uint) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: _a0
-func (_m *EMPLStorager) Get(_a0 uint) (model.UserJobs, error) {
-	ret := _m.Called(_a0)
+// Get provides a mock function with given fields: from, target
+func (_m *EMPLStorager) Get(from *model.UserRole, target uint) (model.UserJobs, error) {
+	ret := _m.Called(from, target)
 
 	var r0 model.UserJobs
-	if rf, ok := ret.Get(0).(func(uint) model.UserJobs); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(*model.UserRole, uint) model.UserJobs); ok {
+		r0 = rf(from, target)
 	} else {
 		r0 = ret.Get(0).(model.UserJobs)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(*model.UserRole, uint) error); ok {
+		r1 = rf(from, target)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -101,6 +101,27 @@ func (_m *EMPLStorager) SearchWaiters(_a0 uint, _a1 *model.Search) ([]model.User
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uint, *model.Search) error); ok {
 		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Self provides a mock function with given fields: _a0
+func (_m *EMPLStorager) Self(_a0 uint) (model.UserJobs, error) {
+	ret := _m.Called(_a0)
+
+	var r0 model.UserJobs
+	if rf, ok := ret.Get(0).(func(uint) model.UserJobs); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(model.UserJobs)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}

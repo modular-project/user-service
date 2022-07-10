@@ -2,26 +2,18 @@ package info
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/modular-project/protobuffers/information/product"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type productService struct {
 	pc product.ProductServiceClient
 }
 
-func NewProductService(host string) (productService, error) {
-	do := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.Dial(host, do)
-	if err != nil {
-		return productService{}, err
-	}
-	pc := product.NewProductServiceClient(conn)
-	log.Printf("produc server connection started on: %s", host)
-	return productService{pc: pc}, err
+func NewProductService(conn *grpc.ClientConn) productService {
+	return productService{pc: product.NewProductServiceClient(conn)}
 }
 
 func (ps productService) Create(ctx context.Context, p *product.Product) (uint64, error) {
@@ -50,6 +42,9 @@ func (ps productService) GetAll(ctx context.Context) ([]*product.Product, error)
 
 func (ps productService) GetInBatch(ctx context.Context, IDs []uint64) ([]*product.Product, error) {
 	r, err := ps.pc.GetInBatch(ctx, &product.RequestGetInBatch{Ids: IDs})
+	if err != nil {
+		return nil, fmt.Errorf("get in batch: %w", err)
+	}
 	return r.Products, err
 }
 

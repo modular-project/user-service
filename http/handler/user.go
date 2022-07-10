@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"users-service/model"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 )
@@ -36,7 +37,7 @@ func (uuc UserUC) SignUp(c echo.Context) error {
 	var err error
 	m := &model.LogIn{}
 	if err = c.Bind(m); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind Log In", err, http.StatusBadRequest)
 	}
 	err = uuc.ss.SignUp(m)
 	if err != nil {
@@ -49,7 +50,7 @@ func (uuc UserUC) SignIn(c echo.Context) error {
 	var err error
 	m := &model.LogIn{}
 	if err = c.Bind(m); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind Log In", err, http.StatusBadRequest)
 	}
 	token, refresh, err := uuc.ss.SignIn(m)
 	if err != nil {
@@ -62,7 +63,7 @@ func (uuc UserUC) SignIn(c echo.Context) error {
 func (uuc UserUC) Refresh(c echo.Context) error {
 	fgp, err := c.Cookie("refresh")
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetRefreshCookie, err)
+		return pkg.NewAppError("Fail at get cookie", err, http.StatusBadRequest)
 	}
 	token, err := uuc.ss.Refresh(&fgp.Value)
 	if err != nil {
@@ -74,7 +75,7 @@ func (uuc UserUC) Refresh(c echo.Context) error {
 func (uuc UserUC) GetUserData(c echo.Context) error {
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	m, err := uuc.us.Data(userID)
 	if err != nil {
@@ -88,11 +89,11 @@ func (uuc UserUC) GetUserData(c echo.Context) error {
 func (uuc UserUC) UpdateUserData(c echo.Context) error {
 	m := &model.User{}
 	if err := c.Bind(m); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind user", err, http.StatusBadRequest)
 	}
 	id, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	m.ID = id
 	err = uuc.us.UpdateData(m)
@@ -105,7 +106,7 @@ func (uuc UserUC) UpdateUserData(c echo.Context) error {
 func (uuc UserUC) SignOut(c echo.Context) error {
 	fgp, err := c.Cookie("refresh")
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetRefreshCookie, err)
+		return pkg.NewAppError("Fail at get cookie", err, http.StatusBadRequest)
 	}
 	err = uuc.ss.SignOut(&fgp.Value)
 	if err != nil {
@@ -117,7 +118,7 @@ func (uuc UserUC) SignOut(c echo.Context) error {
 func (uuc UserUC) VerifyUser(c echo.Context) error {
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	code := c.QueryParam("code")
 	err = uuc.us.Verify(userID, code)
@@ -130,7 +131,7 @@ func (uuc UserUC) VerifyUser(c echo.Context) error {
 func (uuc UserUC) GenerateVerificationCode(c echo.Context) error {
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	err = uuc.us.GenerateCode(userID)
 	if err != nil {
@@ -142,11 +143,11 @@ func (uuc UserUC) GenerateVerificationCode(c echo.Context) error {
 func (uuc UserUC) ChangePassword(c echo.Context) error {
 	m := &model.User{}
 	if err := c.Bind(m); err != nil {
-		return fmt.Errorf("%w, %v", ErrBindData, err)
+		return pkg.NewAppError("Fail at bind user", err, http.StatusBadRequest)
 	}
 	id, err := getUserIDFromContext(c)
 	if err != nil {
-		return fmt.Errorf("%w, %v", ErrGetIDFromContext, err)
+		return err
 	}
 	err = uuc.us.ChangePassword(id, &m.Password)
 	if err != nil {

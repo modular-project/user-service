@@ -10,11 +10,8 @@ import (
 )
 
 var (
-	ErrUserIdNotFoundInJwt = errors.New("user id not found in jwt")
-	ErrBindData            = pkg.BadErr("bind data")
-	ErrGetIDFromContext    = pkg.BadErr("get id from context")
-	ErrGetParamFromPath    = pkg.BadErr("get param from path")
-	ErrGetRefreshCookie    = pkg.BadErr("get refresh cookie")
+	ErrUserIDNotFoundInJwt = errors.New("user id not found in jwt")
+	ErrUserIDIsNotANumber  = errors.New("user id is not a number")
 )
 
 func createRefreshCookie(c echo.Context, refreshToken string) {
@@ -44,7 +41,11 @@ func getUserIDFromContext(c echo.Context) (uint, error) {
 	data := token.Public()
 	v, ok := data["uid"]
 	if !ok {
-		return 0, ErrUserIdNotFoundInJwt
+		return 0, pkg.NewAppError("Fail at get User ID from context", ErrUserIDNotFoundInJwt, http.StatusUnauthorized)
 	}
-	return uint(v.(float64)), nil
+	id, ok := v.(float64)
+	if !ok {
+		return 0, pkg.NewAppError("Fail at get User ID from context", ErrUserIDIsNotANumber, http.StatusBadRequest)
+	}
+	return uint(id), nil
 }

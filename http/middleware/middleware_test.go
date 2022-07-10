@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"users-service/http/handler"
 	"users-service/pkg"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFindError(t *testing.T) {
@@ -16,37 +17,31 @@ func TestFindError(t *testing.T) {
 		name    string
 		args    args
 		want    int
-		wantErr error
+		wantMSG string
 	}{
 		{
 			name:    "BadRequest",
-			args:    args{fmt.Errorf("error, %w", fmt.Errorf("error 2, %w", handler.ErrBindData))},
+			args:    args{fmt.Errorf("error, %w", fmt.Errorf("error 2, %w", &pkg.AppError{MSG: "BadRequest", Code: http.StatusBadRequest}))},
 			want:    http.StatusBadRequest,
-			wantErr: handler.ErrBindData,
+			wantMSG: "BadRequest",
 		}, {
 			name: "Internal",
 			args: args{
 				err: fmt.Errorf("a undefinied error"),
 			},
-			want:    http.StatusInternalServerError,
-			wantErr: nil,
+			want: http.StatusInternalServerError,
 		}, {
 			name:    "Unauthorized",
-			args:    args{fmt.Errorf("error, %w", fmt.Errorf("error 2, %w", pkg.UnauthorizedErr("user is unauthorized")))},
+			args:    args{fmt.Errorf("error, %w", fmt.Errorf("error 2, %w", pkg.NewAppError("Unauthorized", nil, http.StatusUnauthorized)))},
 			want:    http.StatusUnauthorized,
-			wantErr: pkg.UnauthorizedErr("user is unauthorized"),
+			wantMSG: "Unauthorized",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := findError(tt.args.err)
-			if err != tt.wantErr {
-				t.Errorf("FindError() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("FindError() = %v, want %v", got, tt.want)
-			}
+			got, gotMSG := pkg.FindError(tt.args.err)
+			assert.Equal(t, tt.want, got, tt.name)
+			assert.Equal(t, tt.wantMSG, gotMSG, tt.name)
 		})
 	}
 }

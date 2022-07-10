@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"users-service/model"
 
 	"gorm.io/gorm"
@@ -17,12 +18,22 @@ func NewVerifyStore() verifyStore {
 func (vs verifyStore) Find(userID uint) (model.Verification, error) {
 	m := model.Verification{}
 	res := vs.db.Where("user_id = ?", userID).First(&m)
-	return m, getErrorFromResult(res)
+	if err := getErrorFromResult(res); err != nil {
+		return model.Verification{}, fmt.Errorf("first verification: %w", err)
+	}
+	return m, nil
 }
 func (vs verifyStore) Delete(userID uint) error {
-	return getErrorFromResult(vs.db.Where("user_id =?", userID).Delete(&model.Verification{}))
+	res := vs.db.Where("user_id =?", userID).Delete(&model.Verification{})
+	if err := getErrorFromResult(res); err != nil {
+		return fmt.Errorf("delete verification: %w", err)
+	}
+	return nil
 }
 func (vs verifyStore) Create(ver *model.Verification) error {
 	res := vs.db.Create(ver)
-	return getErrorFromResult(res)
+	if err := getErrorFromResult(res); err != nil {
+		return fmt.Errorf("create verification: %w", err)
+	}
+	return nil
 }

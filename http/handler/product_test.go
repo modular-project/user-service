@@ -43,7 +43,7 @@ func TestCreateProduct(t *testing.T) {
 	assert := assert.New(t)
 	ps := mocks.NewProductServicer(t)
 	ps.On("Create", mock.Anything, mock.Anything).Return(uint64(1), nil).Once()
-	ps.On("Create", mock.Anything, mock.Anything).Return(uint64(0), pkg.BadErr("fail at create")).Once()
+	ps.On("Create", mock.Anything, mock.Anything).Return(uint64(0), pkg.NewAppError("Fail at create", nil, http.StatusBadRequest)).Once()
 	puc := NewProductUC(ps)
 	for i, tt := range tests {
 

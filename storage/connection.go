@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"users-service/model"
+	"users-service/pkg"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -23,13 +24,13 @@ var (
 
 func getErrorFromResult(tx *gorm.DB) error {
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-		return ErrNotFound
+		return pkg.ErrNoRowsAffected
 	}
 	if tx.Error != nil {
 		return tx.Error
 	}
 	if tx.RowsAffected == 0 {
-		return ErrNotFound
+		return pkg.ErrNoRowsAffected
 	}
 	return nil
 }
@@ -74,6 +75,7 @@ func setRoles() error {
 		return nil
 	}
 	res = _db.CreateInBatches(&roles, len(roles))
+	log.Println("roles was created")
 	return getErrorFromResult(res)
 }
 
@@ -98,6 +100,7 @@ func setOwner() error {
 		Salary:   100,
 		IsActive: true,
 	})
+	log.Println("owner is set")
 	return getErrorFromResult(res)
 }
 
@@ -110,15 +113,15 @@ func Migrate(tables ...interface{}) error {
 	if err != nil {
 		return fmt.Errorf("fail at setup join table :%w", err)
 	}
-	return _db.AutoMigrate(tables...)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = setRoles()
-	// if err != nil {
-	// 	return err
-	// }
-	// return setOwner()
+	err = _db.AutoMigrate(tables...)
+	if err != nil {
+		return err
+	}
+	err = setRoles()
+	if err != nil {
+		return err
+	}
+	return setOwner()
 }
 
 // func DB() *gorm.DB {
