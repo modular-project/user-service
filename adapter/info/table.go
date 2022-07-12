@@ -13,6 +13,7 @@ import (
 
 type Permissioner interface {
 	Job(uint) (model.UserRole, error)
+	Greater(uint, model.RoleID) error
 }
 
 type tableService struct {

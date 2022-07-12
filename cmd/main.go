@@ -126,11 +126,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("fatal at start grpc connection in %s:%s, %v", iHost, iPort, err)
 	}
+	// Create Adapter dependencies
 	ps := info.NewProductService(conn)
-	if err != nil {
-		log.Fatalf("no se logro realizar la conexion: %v", err)
-	}
-	ts := info.NewTableService(conn, job)
+	ts := info.NewTableService(conn, per)
+	ess := info.NewESTBService(conn)
 	// Create Custon Middleware
 	mid := mdw.NewMiddleware(to)
 	// Create Use Cases
@@ -138,8 +137,9 @@ func main() {
 	eUC := handler.NewEMPLUC(es)
 	pUC := handler.NewProductUC(ps)
 	tUC := handler.NewTableUC(ts)
+	estUC := handler.NewESTDuc(ess)
 	// Create routes
-	r := route.NewRouter(mid, uUC, eUC, pUC, tUC)
+	r := route.NewRouter(mid, uUC, eUC, pUC, tUC, estUC)
 	// Start server
 	e := echo.New()
 	e.Use(middleware.Recover())

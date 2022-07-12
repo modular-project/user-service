@@ -8,21 +8,33 @@ import (
 )
 
 type route struct {
-	mid middleware.Middleware
-	uuc handler.UserUC
-	euc handler.EMPLuc
-	puc handler.ProductUC
-	tuc handler.TableUC
+	mid   middleware.Middleware
+	uuc   handler.UserUC
+	euc   handler.EMPLuc
+	puc   handler.ProductUC
+	tuc   handler.TableUC
+	estuc handler.ESTDuc
 }
 
-func NewRouter(mid middleware.Middleware, uuc handler.UserUC, euc handler.EMPLuc, puc handler.ProductUC, tuc handler.TableUC) route {
+func NewRouter(mid middleware.Middleware, uuc handler.UserUC, euc handler.EMPLuc, puc handler.ProductUC, tuc handler.TableUC, estuc handler.ESTDuc) route {
 	return route{
-		uuc: uuc,
-		mid: mid,
-		euc: euc,
-		puc: puc,
-		tuc: tuc,
+		uuc:   uuc,
+		mid:   mid,
+		euc:   euc,
+		puc:   puc,
+		tuc:   tuc,
+		estuc: estuc,
 	}
+}
+
+func (r route) establishment(e *echo.Echo) {
+	g := e.Group("api/v1/establishment")
+	g.GET("/:id", r.estuc.Get)
+	g.GET("/", r.estuc.GetInBatch)
+	g.Use(r.mid.Login)
+	g.POST("/", r.estuc.Create)
+	g.PUT("/:id", r.estuc.Update)
+	g.DELETE("/:id", r.estuc.Delete)
 }
 
 func (r route) table(e *echo.Echo) {
@@ -77,4 +89,5 @@ func (r route) Start(e *echo.Echo) {
 	r.employee(e)
 	r.product(e)
 	r.table(e)
+	r.establishment(e)
 }
