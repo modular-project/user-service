@@ -14,11 +14,11 @@ type EMPLService struct {
 }
 
 // Fire provides a mock function with given fields: from, target
-func (_m *EMPLService) Fire(from uint, target uint) error {
+func (_m *EMPLService) Fire(from model.UserRole, target uint) error {
 	ret := _m.Called(from, target)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uint, uint) error); ok {
+	if rf, ok := ret.Get(0).(func(model.UserRole, uint) error); ok {
 		r0 = rf(from, target)
 	} else {
 		r0 = ret.Error(0)
@@ -28,18 +28,18 @@ func (_m *EMPLService) Fire(from uint, target uint) error {
 }
 
 // Get provides a mock function with given fields: from, target
-func (_m *EMPLService) Get(from uint, target uint) (model.UserJobs, error) {
+func (_m *EMPLService) Get(from model.UserRole, target uint) (model.UserJobs, error) {
 	ret := _m.Called(from, target)
 
 	var r0 model.UserJobs
-	if rf, ok := ret.Get(0).(func(uint, uint) model.UserJobs); ok {
+	if rf, ok := ret.Get(0).(func(model.UserRole, uint) model.UserJobs); ok {
 		r0 = rf(from, target)
 	} else {
 		r0 = ret.Get(0).(model.UserJobs)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint, uint) error); ok {
+	if rf, ok := ret.Get(1).(func(model.UserRole, uint) error); ok {
 		r1 = rf(from, target)
 	} else {
 		r1 = ret.Error(1)
@@ -49,11 +49,11 @@ func (_m *EMPLService) Get(from uint, target uint) (model.UserJobs, error) {
 }
 
 // Hire provides a mock function with given fields: _a0, _a1, _a2
-func (_m *EMPLService) Hire(_a0 uint, _a1 string, _a2 *model.UserRole) error {
+func (_m *EMPLService) Hire(_a0 model.UserRole, _a1 string, _a2 *model.UserRole) error {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uint, string, *model.UserRole) error); ok {
+	if rf, ok := ret.Get(0).(func(model.UserRole, string, *model.UserRole) error); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
@@ -63,11 +63,11 @@ func (_m *EMPLService) Hire(_a0 uint, _a1 string, _a2 *model.UserRole) error {
 }
 
 // HireWaiter provides a mock function with given fields: _a0, _a1, _a2
-func (_m *EMPLService) HireWaiter(_a0 uint, _a1 string, _a2 float64) error {
+func (_m *EMPLService) HireWaiter(_a0 model.UserRole, _a1 string, _a2 float64) error {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uint, string, float64) error); ok {
+	if rf, ok := ret.Get(0).(func(model.UserRole, string, float64) error); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
@@ -76,13 +76,13 @@ func (_m *EMPLService) HireWaiter(_a0 uint, _a1 string, _a2 float64) error {
 	return r0
 }
 
-// Search provides a mock function with given fields: _a0, _a1
-func (_m *EMPLService) Search(_a0 uint, _a1 *model.SearchEMPL) ([]model.User, error) {
-	ret := _m.Called(_a0, _a1)
+// Search provides a mock function with given fields: _a0
+func (_m *EMPLService) Search(_a0 *model.SearchEMPL) ([]model.User, error) {
+	ret := _m.Called(_a0)
 
 	var r0 []model.User
-	if rf, ok := ret.Get(0).(func(uint, *model.SearchEMPL) []model.User); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(*model.SearchEMPL) []model.User); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.User)
@@ -90,8 +90,8 @@ func (_m *EMPLService) Search(_a0 uint, _a1 *model.SearchEMPL) ([]model.User, er
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint, *model.SearchEMPL) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(*model.SearchEMPL) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -144,11 +144,11 @@ func (_m *EMPLService) Self(_a0 uint) (model.UserJobs, error) {
 }
 
 // Update provides a mock function with given fields: from, target, u
-func (_m *EMPLService) Update(from uint, target uint, u *model.User) error {
+func (_m *EMPLService) Update(from model.UserRole, target uint, u *model.User) error {
 	ret := _m.Called(from, target, u)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uint, uint, *model.User) error); ok {
+	if rf, ok := ret.Get(0).(func(model.UserRole, uint, *model.User) error); ok {
 		r0 = rf(from, target, u)
 	} else {
 		r0 = ret.Error(0)

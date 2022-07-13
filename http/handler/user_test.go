@@ -1,20 +1,7 @@
 package handler_test
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"users-service/http/handler"
-	"users-service/http/middleware"
-	"users-service/mocks"
 	"users-service/model"
-	"users-service/pkg"
-
-	"github.com/labstack/echo"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 type ResponseJson struct {
@@ -26,62 +13,62 @@ type TestCase struct {
 	wantCode int
 }
 
-func TestSingUp(t *testing.T) {
-	tests := []TestCase{
-		{model.LogIn{
-			User:     "cualquiera",
-			Password: "Password12345.",
-		}, http.StatusBadRequest},
-		{model.LogIn{
-			User:     "usuario@mail.com",
-			Password: "as",
-		}, http.StatusBadRequest},
-		{model.LogIn{
-			User:     "usuario@mail.com",
-			Password: "Password12345.",
-		}, http.StatusCreated},
-		{model.LogIn{
-			User:     "usuario@mail.com",
-			Password: "Password12345.",
-		}, http.StatusBadRequest},
-		{model.LogIn{
-			User:     "usuario1@mail.com",
-			Password: " ",
-		}, http.StatusBadRequest},
-		{model.LogIn{
-			User:     "usuario1@mail.com",
-			Password: "Password12345. ",
-		}, http.StatusCreated},
-	}
-	for _, tt := range tests {
-		si := mocks.NewSignUCer(t)
-		assert := assert.New(t)
-		if tt.wantCode != http.StatusCreated {
-			si.On("SignUp", mock.Anything).Return(pkg.NewAppError("Fail at sing up", nil, http.StatusBadRequest)).Once()
-		} else {
-			si.On("SignUp", mock.Anything).Return(nil).Once()
-		}
-		data, err := json.Marshal(tt.give)
-		if err != nil {
-			t.Fatalf("Error at marshal: %s", err)
-		}
+// func TestSingUp(t *testing.T) {
+// 	tests := []TestCase{
+// 		{model.LogIn{
+// 			User:     "cualquiera",
+// 			Password: "Password12345.",
+// 		}, http.StatusBadRequest},
+// 		{model.LogIn{
+// 			User:     "usuario@mail.com",
+// 			Password: "as",
+// 		}, http.StatusBadRequest},
+// 		{model.LogIn{
+// 			User:     "usuario@mail.com",
+// 			Password: "Password12345.",
+// 		}, http.StatusCreated},
+// 		{model.LogIn{
+// 			User:     "usuario@mail.com",
+// 			Password: "Password12345.",
+// 		}, http.StatusBadRequest},
+// 		{model.LogIn{
+// 			User:     "usuario1@mail.com",
+// 			Password: " ",
+// 		}, http.StatusBadRequest},
+// 		{model.LogIn{
+// 			User:     "usuario1@mail.com",
+// 			Password: "Password12345. ",
+// 		}, http.StatusCreated},
+// 	}
+// 	for _, tt := range tests {
+// 		si := mocks.NewSignUCer(t)
+// 		assert := assert.New(t)
+// 		if tt.wantCode != http.StatusCreated {
+// 			si.On("SignUp", mock.Anything).Return(pkg.NewAppError("Fail at sing up", nil, http.StatusBadRequest)).Once()
+// 		} else {
+// 			si.On("SignUp", mock.Anything).Return(nil).Once()
+// 		}
+// 		data, err := json.Marshal(tt.give)
+// 		if err != nil {
+// 			t.Fatalf("Error at marshal: %s", err)
+// 		}
 
-		r := httptest.NewRequest(http.MethodPost, "/signup/", bytes.NewBuffer(data))
-		r.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		e := echo.New()
-		m := middleware.NewMiddleware(nil)
-		ctx := e.NewContext(r, w)
-		h := handler.NewUserUC(nil, si)
-		gotErr := h.SignUp(ctx)
-		if gotErr != nil {
-			m.Errors(gotErr, ctx)
-		}
+// 		r := httptest.NewRequest(http.MethodPost, "/signup/", bytes.NewBuffer(data))
+// 		r.Header.Set("Content-Type", "application/json")
+// 		w := httptest.NewRecorder()
+// 		e := echo.New()
+// 		m := middleware.NewMiddleware(nil)
+// 		ctx := e.NewContext(r, w)
+// 		h := handler.NewUserUC(nil, si)
+// 		gotErr := h.SignUp(ctx)
+// 		if gotErr != nil {
+// 			m.Errors(gotErr, ctx)
+// 		}
 
-		assert.Equal(tt.wantCode, ctx.Response().Status)
+// 		assert.Equal(tt.wantCode, ctx.Response().Status)
 
-	}
-}
+// 	}
+// }
 
 // func TestSingIn(t *testing.T) {
 // 	storage.New(storage.TESTING)

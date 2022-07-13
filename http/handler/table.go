@@ -12,8 +12,8 @@ import (
 )
 
 type TableService interface {
-	Delete(ctx context.Context, uID uint, eID uint64, qua uint32) (uint32, error)
-	CreateInBatch(ctx context.Context, uID uint, eID uint64, qua uint32) ([]uint64, error)
+	Delete(ctx context.Context, eID uint64, qua uint32) (uint32, error)
+	CreateInBatch(ctx context.Context, eID uint64, qua uint32) ([]uint64, error)
 	GetFromEstablishment(context.Context, uint64) ([]*table.Table, error)
 }
 
@@ -25,29 +25,16 @@ func NewTableUC(ts TableService) TableUC {
 	return TableUC{ts}
 }
 
-func params(c echo.Context) (uint64, uint, error) {
-	q, err := strconv.ParseUint(c.QueryParam("q"), 10, 0)
-	if err != nil {
-		q = 1
-	}
-	uID, err := getUserIDFromContext(c)
-	if err != nil {
-		return 0, 0, err
-	}
-	return q, uID, nil
-}
-
 func (tu TableUC) Create(c echo.Context) error {
 	eID, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
 		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-
-	q, uID, err := params(c)
+	q, err := strconv.ParseUint(c.QueryParam("q"), 10, 0)
 	if err != nil {
-		return err
+		q = 1
 	}
-	ids, err := tu.ts.CreateInBatch(context.Background(), uID, eID, uint32(q))
+	ids, err := tu.ts.CreateInBatch(c.Request().Context(), eID, uint32(q))
 	if err != nil {
 		return fmt.Errorf("fail at create: %w", err)
 	}
@@ -58,11 +45,16 @@ func (tu TableUC) Create(c echo.Context) error {
 }
 
 func (tu TableUC) CreateIn(c echo.Context) error {
-	q, uID, err := params(c)
+	q, err := strconv.ParseUint(c.QueryParam("q"), 10, 0)
+	if err != nil {
+		q = 1
+	}
+	ur, err := getUserRoleFromContext(c)
 	if err != nil {
 		return err
 	}
-	ids, err := tu.ts.CreateInBatch(context.Background(), uID, 0, uint32(q))
+
+	ids, err := tu.ts.CreateInBatch(c.Request().Context(), uint64(ur.EstablishmentID), uint32(q))
 	if err != nil {
 		return fmt.Errorf("fail at create: %w", err)
 	}
@@ -77,12 +69,11 @@ func (tu TableUC) Delete(c echo.Context) error {
 	if err != nil {
 		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-
-	q, uID, err := params(c)
+	q, err := strconv.ParseUint(c.QueryParam("q"), 10, 0)
 	if err != nil {
-		return err
+		q = 1
 	}
-	del, err := tu.ts.Delete(context.Background(), uID, eID, uint32(q))
+	del, err := tu.ts.Delete(c.Request().Context(), eID, uint32(q))
 	if err != nil {
 		return fmt.Errorf("fail at delete: %w", err)
 	}
@@ -91,11 +82,15 @@ func (tu TableUC) Delete(c echo.Context) error {
 }
 
 func (tu TableUC) DeleteIn(c echo.Context) error {
-	q, uID, err := params(c)
+	q, err := strconv.ParseUint(c.QueryParam("q"), 10, 0)
+	if err != nil {
+		q = 1
+	}
+	ur, err := getUserRoleFromContext(c)
 	if err != nil {
 		return err
 	}
-	del, err := tu.ts.Delete(context.Background(), uID, 0, uint32(q))
+	del, err := tu.ts.Delete(c.Request().Context(), uint64(ur.EstablishmentID), uint32(q))
 	if err != nil {
 		return fmt.Errorf("fail at delete: %w", err)
 	}
@@ -108,7 +103,7 @@ func (tu TableUC) Get(c echo.Context) error {
 	if err != nil {
 		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-	ta, err := tu.ts.GetFromEstablishment(context.Background(), eID)
+	ta, err := tu.ts.GetFromEstablishment(c.Request().Context(), eID)
 	if err != nil {
 		return fmt.Errorf("get from est: %w", err)
 	}

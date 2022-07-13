@@ -44,7 +44,7 @@ func (puc ProductUC) Get(c echo.Context) error {
 	if err != nil {
 		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-	p, err := puc.ps.Get(context.Background(), id)
+	p, err := puc.ps.Get(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (puc ProductUC) Get(c echo.Context) error {
 }
 
 func (pub ProductUC) GetAll(c echo.Context) error {
-	ps, err := pub.ps.GetAll(context.Background())
+	ps, err := pub.ps.GetAll(c.Request().Context())
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (pub ProductUC) GetInBatch(c echo.Context) error {
 	if err := c.Bind(&ids); err != nil {
 		return pkg.NewAppError("Fail at bind ids", err, http.StatusBadRequest)
 	}
-	ps, err := pub.ps.GetInBatch(context.Background(), ids.IDs)
+	ps, err := pub.ps.GetInBatch(c.Request().Context(), ids.IDs)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (pub ProductUC) Delete(c echo.Context) error {
 	if err != nil {
 		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-	err = pub.ps.Delete(context.Background(), id)
+	err = pub.ps.Delete(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (pub ProductUC) Update(c echo.Context) error {
 	if err := c.Bind(&p); err != nil {
 		return pkg.NewAppError("Fail at bind product", err, http.StatusBadRequest)
 	}
-	id, err = pub.ps.Update(context.Background(), id, &p)
+	id, err = pub.ps.Update(c.Request().Context(), id, &p)
 	if err != nil {
 		return err
 	}
