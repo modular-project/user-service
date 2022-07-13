@@ -7,15 +7,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type jobStore struct {
+type permissionStore struct {
 	db *gorm.DB
 }
 
-func NewJobStore() jobStore {
-	return jobStore{db: _db}
+func NewPermissionStore() permissionStore {
+	return permissionStore{db: _db}
 }
 
-func (js jobStore) Find(email string) (model.User, error) {
+func (js permissionStore) Find(email string) (model.User, error) {
 	user := model.User{}
 	res := js.db.Model(&user).Where("email = ?", email).
 		Select("users.id", "users.is_verified", "r.role_id", "r.establishment_id", "r.is_active").
@@ -26,7 +26,7 @@ func (js jobStore) Find(email string) (model.User, error) {
 	return user, nil
 }
 
-func (js jobStore) Job(uID uint) (model.UserRole, error) {
+func (js permissionStore) UserRole(uID uint) (model.UserRole, error) {
 	r := model.UserRole{}
 	res := js.db.Where("user_id = ? and is_active = true", uID).Select("user_id, role_id, establishment_id, is_active").First(&r)
 	if err := getErrorFromResult(res); err != nil {
@@ -35,7 +35,7 @@ func (js jobStore) Job(uID uint) (model.UserRole, error) {
 	return r, nil
 }
 
-func (js jobStore) IsEmployee(userID uint) (bool, error) {
+func (js permissionStore) IsEmployee(userID uint) (bool, error) {
 	m := model.UserRole{}
 	res := js.db.Select("id").Where("user_id = ?", userID).First(&m)
 	if res.Error != nil {
@@ -44,7 +44,7 @@ func (js jobStore) IsEmployee(userID uint) (bool, error) {
 	return res.RowsAffected == 1, nil
 }
 
-func (js jobStore) IsActive(userID uint) (bool, error) {
+func (js permissionStore) IsActive(userID uint) (bool, error) {
 	m := model.UserRole{}
 	res := js.db.Select("id").Where("user_id = ? AND is_active = true", userID).First(&m)
 	if res.Error != nil {
@@ -53,7 +53,7 @@ func (js jobStore) IsActive(userID uint) (bool, error) {
 	return res.RowsAffected == 1, nil
 }
 
-func (js jobStore) IsVerified(userID uint) (bool, error) {
+func (js permissionStore) IsVerified(userID uint) (bool, error) {
 	m := model.User{}
 	res := js.db.Select("is_verified").Where("user_id = ?", userID).First(&m)
 	if err := getErrorFromResult(res); err != nil {

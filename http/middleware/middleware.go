@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"users-service/model"
 	"users-service/pkg"
 
 	"github.com/gbrlsnchs/jwt"
@@ -14,11 +15,15 @@ type Validater interface {
 	Validate(*string) (*jwt.JWT, error)
 }
 
+type Permissioner interface {
+	UserRole(uint) (model.UserRole, error)
+}
 type Middleware struct {
 	va Validater
+	pe Permissioner
 }
 
-func NewMiddleware(va Validater) Middleware {
+func NewMiddleware(va Validater, pe Permissioner) Middleware {
 	return Middleware{va: va}
 }
 

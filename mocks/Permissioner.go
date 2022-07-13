@@ -13,8 +13,8 @@ type Permissioner struct {
 	mock.Mock
 }
 
-// Job provides a mock function with given fields: _a0
-func (_m *Permissioner) Job(_a0 uint) (model.UserRole, error) {
+// UserRole provides a mock function with given fields: _a0
+func (_m *Permissioner) UserRole(_a0 uint) (model.UserRole, error) {
 	ret := _m.Called(_a0)
 
 	var r0 model.UserRole

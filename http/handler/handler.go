@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"users-service/model"
 	"users-service/pkg"
 
 	"github.com/gbrlsnchs/jwt"
@@ -12,6 +13,7 @@ import (
 var (
 	ErrUserIDNotFoundInJwt = errors.New("user id not found in jwt")
 	ErrUserIDIsNotANumber  = errors.New("user id is not a number")
+	ErrTokenIsNotAJWT      = errors.New("token is not a jwt")
 )
 
 func createRefreshCookie(c echo.Context, refreshToken string) {
@@ -36,16 +38,27 @@ func responseID(id uint64) map[string]interface{} {
 	}
 }
 
+func getUserRoleFromContext(c echo.Context) (model.UserRole, error) {
+	ur, ok := c.Get("ur").(model.UserRole)
+	if !ok {
+		return model.UserRole{}, pkg.NewAppError("user don't have a role", nil, http.StatusUnauthorized)
+	}
+	return ur, nil
+}
+
 func getUserIDFromContext(c echo.Context) (uint, error) {
-	token := c.Get("token").(jwt.JWT)
+	token, ok := c.Get("token").(jwt.JWT)
+	if !ok {
+		return 0, pkg.NewAppError("invalid token", ErrTokenIsNotAJWT, http.StatusUnauthorized)
+	}
 	data := token.Public()
 	v, ok := data["uid"]
 	if !ok {
-		return 0, pkg.NewAppError("Fail at get User ID from context", ErrUserIDNotFoundInJwt, http.StatusUnauthorized)
+		return 0, pkg.NewAppError("fail at get User ID from context", ErrUserIDNotFoundInJwt, http.StatusUnauthorized)
 	}
 	id, ok := v.(float64)
 	if !ok {
-		return 0, pkg.NewAppError("Fail at get User ID from context", ErrUserIDIsNotANumber, http.StatusBadRequest)
+		return 0, pkg.NewAppError("fail at get User ID from context", ErrUserIDIsNotANumber, http.StatusBadRequest)
 	}
 	return uint(id), nil
 }

@@ -15,13 +15,13 @@ type TableService struct {
 	mock.Mock
 }
 
-// CreateInBatch provides a mock function with given fields: ctx, uID, eID, qua
-func (_m *TableService) CreateInBatch(ctx context.Context, uID uint, eID uint64, qua uint32) ([]uint64, error) {
-	ret := _m.Called(ctx, uID, eID, qua)
+// CreateInBatch provides a mock function with given fields: ctx, eID, qua
+func (_m *TableService) CreateInBatch(ctx context.Context, eID uint64, qua uint32) ([]uint64, error) {
+	ret := _m.Called(ctx, eID, qua)
 
 	var r0 []uint64
-	if rf, ok := ret.Get(0).(func(context.Context, uint, uint64, uint32) []uint64); ok {
-		r0 = rf(ctx, uID, eID, qua)
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint32) []uint64); ok {
+		r0 = rf(ctx, eID, qua)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]uint64)
@@ -29,8 +29,8 @@ func (_m *TableService) CreateInBatch(ctx context.Context, uID uint, eID uint64,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, uint, uint64, uint32) error); ok {
-		r1 = rf(ctx, uID, eID, qua)
+	if rf, ok := ret.Get(1).(func(context.Context, uint64, uint32) error); ok {
+		r1 = rf(ctx, eID, qua)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -38,20 +38,20 @@ func (_m *TableService) CreateInBatch(ctx context.Context, uID uint, eID uint64,
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: ctx, uID, eID, qua
-func (_m *TableService) Delete(ctx context.Context, uID uint, eID uint64, qua uint32) (uint32, error) {
-	ret := _m.Called(ctx, uID, eID, qua)
+// Delete provides a mock function with given fields: ctx, eID, qua
+func (_m *TableService) Delete(ctx context.Context, eID uint64, qua uint32) (uint32, error) {
+	ret := _m.Called(ctx, eID, qua)
 
 	var r0 uint32
-	if rf, ok := ret.Get(0).(func(context.Context, uint, uint64, uint32) uint32); ok {
-		r0 = rf(ctx, uID, eID, qua)
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint32) uint32); ok {
+		r0 = rf(ctx, eID, qua)
 	} else {
 		r0 = ret.Get(0).(uint32)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, uint, uint64, uint32) error); ok {
-		r1 = rf(ctx, uID, eID, qua)
+	if rf, ok := ret.Get(1).(func(context.Context, uint64, uint32) error); ok {
+		r1 = rf(ctx, eID, qua)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -117,7 +117,7 @@ func main() {
 	to := authorization.NewToken()
 	us := controller.NewUserService(storage.NewUserStore(), storage.NewVerifyStore(), email.NewMail())
 	ss := controller.NewSignService(storage.NewRefreshStore(), controller.NewUserValidate(), storage.NewUserSignStore(), to)
-	job := storage.NewJobStore()
+	job := storage.NewPermissionStore()
 	per := controller.NewPermission(job)
 	es := controller.NewEmployeeService(storage.NewEMPLStore(), storage.NewUserStore(), per)
 	// Start GRPC clients
@@ -128,10 +128,10 @@ func main() {
 	}
 	// Create Adapter dependencies
 	ps := info.NewProductService(conn)
-	ts := info.NewTableService(conn, per)
+	ts := info.NewTableService(conn)
 	ess := info.NewESTBService(conn)
 	// Create Custon Middleware
-	mid := mdw.NewMiddleware(to)
+	mid := mdw.NewMiddleware(to, per)
 	// Create Use Cases
 	uUC := handler.NewUserUC(us, ss)
 	eUC := handler.NewEMPLUC(es)
