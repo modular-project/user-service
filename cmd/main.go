@@ -115,11 +115,14 @@ func main() {
 	}
 	// Create Dependencies
 	to := authorization.NewToken()
+	rs := storage.NewRefreshStore()
 	us := controller.NewUserService(storage.NewUserStore(), storage.NewVerifyStore(), email.NewMail())
-	ss := controller.NewSignService(storage.NewRefreshStore(), controller.NewUserValidate(), storage.NewUserSignStore(), to)
+	ss := controller.NewSignService(rs, controller.NewUserValidate(), storage.NewUserSignStore(), to)
+	kss := controller.NewSignService(rs, controller.NewKitchenValidate(), storage.NewKitchenSignStore(), to)
 	job := storage.NewPermissionStore()
 	per := controller.NewPermission(job)
 	es := controller.NewEmployeeService(storage.NewEMPLStore(), storage.NewUserStore(), per)
+	ks := controller.NewKitchenService(storage.NewKitchenStore())
 	// Start GRPC clients
 	do := grpc.WithTransportCredentials(insecure.NewCredentials())
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", iHost, iPort), do)
@@ -138,8 +141,9 @@ func main() {
 	pUC := handler.NewProductUC(ps)
 	tUC := handler.NewTableUC(ts)
 	estUC := handler.NewESTDuc(ess)
+	kUC := handler.NewKitchenUC(kss, ks)
 	// Create routes
-	r := route.NewRouter(mid, uUC, eUC, pUC, tUC, estUC)
+	r := route.NewRouter(mid, uUC, eUC, pUC, tUC, estUC, kUC)
 	// Start server
 	e := echo.New()
 	e.Use(middleware.Recover())

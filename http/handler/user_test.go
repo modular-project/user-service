@@ -1,17 +1,17 @@
 package handler_test
 
-import (
-	"users-service/model"
-)
+// import (
+// 	"users-service/model"
+// )
 
-type ResponseJson struct {
-	Message string `json:"msg"`
-}
+// type ResponseJson struct {
+// 	Message string `json:"msg"`
+// }
 
-type TestCase struct {
-	give     model.LogIn
-	wantCode int
-}
+// type TestCase struct {
+// 	give     model.LogIn
+// 	wantCode int
+// }
 
 // func TestSingUp(t *testing.T) {
 // 	tests := []TestCase{

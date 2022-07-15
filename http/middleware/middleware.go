@@ -24,7 +24,7 @@ type Middleware struct {
 }
 
 func NewMiddleware(va Validater, pe Permissioner) Middleware {
-	return Middleware{va: va}
+	return Middleware{va: va, pe: pe}
 }
 
 // Errors handler all errors and checks them to return an response error

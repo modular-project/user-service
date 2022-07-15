@@ -15,9 +15,11 @@ type route struct {
 	puc   handler.ProductUC
 	tuc   handler.TableUC
 	estuc handler.ESTDuc
+	kuc   handler.KitchenUC
 }
 
-func NewRouter(mid middleware.Middleware, uuc handler.UserUC, euc handler.EMPLuc, puc handler.ProductUC, tuc handler.TableUC, estuc handler.ESTDuc) route {
+func NewRouter(mid middleware.Middleware, uuc handler.UserUC, euc handler.EMPLuc, puc handler.ProductUC, tuc handler.TableUC, estuc handler.ESTDuc,
+	kuc handler.KitchenUC) route {
 	return route{
 		uuc:   uuc,
 		mid:   mid,
@@ -25,7 +27,20 @@ func NewRouter(mid middleware.Middleware, uuc handler.UserUC, euc handler.EMPLuc
 		puc:   puc,
 		tuc:   tuc,
 		estuc: estuc,
+		kuc:   kuc,
 	}
+}
+
+func (r route) kitchen(e *echo.Echo) {
+	g := e.Group("/api/v1/kitchen")
+	g.POST("/signin/", r.kuc.SignIn)
+	g.POST("/refresh/", r.kuc.Refresh)
+	g.DELETE("/refresh/", r.kuc.SignOut)
+	g.Use(r.mid.Equal(model.MANAGER, true))
+	g.POST("/signup/", r.kuc.SignUp)
+	g.GET("/", r.kuc.GetInESTB)
+	g.PUT("/:id", r.kuc.Update)
+	g.DELETE("/:id", r.kuc.Delete)
 }
 
 func (r route) establishment(e *echo.Echo) {
@@ -91,4 +106,5 @@ func (r route) Start(e *echo.Echo) {
 	r.product(e)
 	r.table(e)
 	r.establishment(e)
+	r.kitchen(e)
 }

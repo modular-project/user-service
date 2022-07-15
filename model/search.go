@@ -29,21 +29,21 @@ const (
 )
 
 type OrderBy struct {
-	By   By
-	Sort Sort
+	By   By   `json:"by,omitempty"`
+	Sort Sort `json:"sort,omitempty"`
 }
 type Search struct {
-	OrderBys []OrderBy
+	OrderBys []OrderBy `json:"order,omitempty"`
 
-	Limit  int
-	Offset int
+	Limit  int `json:"limit,omitempty"`
+	Offset int `json:"offset,omitempty"`
 }
 
 type SearchEMPL struct {
 	Search
-	Status
-	Rols []uint `json:"roles,omitempty"`
-	Ests []uint `json:"ests,omitempty"`
+	Status `json:"status"`
+	Rols   []uint `json:"roles,omitempty"`
+	Ests   []uint `json:"ests,omitempty"`
 }
 
 func (o OrderBy) get() string {
@@ -73,10 +73,11 @@ func (o OrderBy) get() string {
 func (s Search) Query() string {
 	var q strings.Builder
 	for i, o := range s.OrderBys {
-		if i != 0 {
+		g := o.get()
+		if i != 0 && g != "" {
 			q.WriteString(",")
 		}
-		q.WriteString(o.get())
+		q.WriteString(g)
 	}
 	return q.String()
 }

@@ -56,7 +56,7 @@ func (uuc UserUC) SignIn(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	createRefreshCookie(c, refresh)
+	createRefreshCookie(c, refresh, "/api/v1/user/refresh/")
 	return c.JSON(http.StatusOK, createResponse(token))
 }
 

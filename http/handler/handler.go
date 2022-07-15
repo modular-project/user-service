@@ -16,11 +16,11 @@ var (
 	ErrTokenIsNotAJWT      = errors.New("token is not a jwt")
 )
 
-func createRefreshCookie(c echo.Context, refreshToken string) {
+func createRefreshCookie(c echo.Context, refreshToken, path string) {
 	cookie := new(http.Cookie)
 	cookie.Name = "refresh"
 	cookie.HttpOnly = true
-	cookie.Path = "/api/v1/user/refresh/"
+	cookie.Path = path
 	cookie.MaxAge = 0
 	cookie.Value = refreshToken
 	c.SetCookie(cookie)
