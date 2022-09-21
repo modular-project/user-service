@@ -42,7 +42,7 @@ func (us userSignStore) Create(l *model.LogIn) error {
 
 func (ks kitchenSignStore) Find(user string) (model.LogIn, error) {
 	kit := model.Kitchen{}
-	res := ks.db.Where("user = ?", user).Select("id", "password").First(kit)
+	res := ks.db.Where("name = ?", user).Select("id", "password").First(&kit)
 	return model.LogIn{Password: kit.Password, ID: kit.ID}, getErrorFromResult(res)
 }
 

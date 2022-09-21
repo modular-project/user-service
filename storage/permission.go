@@ -15,6 +15,15 @@ func NewPermissionStore() permissionStore {
 	return permissionStore{db: _db}
 }
 
+func (js permissionStore) Kitchen(kID uint) (uint, error) {
+	k := model.Kitchen{Model: model.Model{ID: kID}}
+	res := js.db.First(&k)
+	if err := getErrorFromResult(res); err != nil {
+		return 0, fmt.Errorf("first kitchen: %w", err)
+	}
+	return k.EstablishmentID, nil
+}
+
 func (js permissionStore) Find(email string) (model.User, error) {
 	user := model.User{}
 	res := js.db.Model(&user).Where("email = ?", email).

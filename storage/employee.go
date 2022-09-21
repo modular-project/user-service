@@ -40,14 +40,13 @@ func (es emplStore) Get(from *model.UserRole, target uint) (model.UserJobs, erro
 	if err != nil {
 		return model.UserJobs{}, fmt.Errorf("find user by id: %w", err)
 	}
-	res = es.db.Model(&model.UserRole{}).Where("user_id = ?", target).Where("role_id = ?", from.RoleID)
+	res = es.db.Model(&model.UserRole{}).Where("user_id = ?", target).Where("role_id > ?", from.RoleID)
 	if from.EstablishmentID != 0 {
 		res = res.Where("establishment_id = ?", from.EstablishmentID) //Check business logic
 	}
 	res = res.Find(&uj.Jobs)
-	err = getErrorFromResult(res)
-	if err != nil {
-		return model.UserJobs{}, fmt.Errorf("get jobs: %w", err)
+	if res.Error != nil {
+		return model.UserJobs{}, fmt.Errorf("get jobs: %w", res.Error)
 	}
 	return uj, nil
 }
@@ -55,9 +54,20 @@ func (es emplStore) Get(from *model.UserRole, target uint) (model.UserJobs, erro
 func (es emplStore) SearchWaiters(estID uint, s *model.Search) ([]model.User, error) {
 	q := s.Query()
 	users := []model.User{}
-	tx := es.db.Model(&users).Select("users.id", "users.email", "users.name").
-		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id").Where("r.establishment_id = ? AND r.role_id = ? AND r.is_active = true", estID, model.WAITER)
 
+	tx := es.db.Model(&users).Select("users.id", "users.email", "users.name", "r.establishment_id", "r.role_id", "r.is_active").
+		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id").Where("r.establishment_id = ? AND r.role_id = ?", estID, model.WAITER)
+	switch s.Status {
+	case model.ACTIVE:
+		tx = tx.Where("r.is_active = true")
+	case model.NOACTVIE:
+		tx = tx.Where("r.is_active = false")
+	case model.ANY:
+		tx = tx.Where("r.is_active IS NOT NULL")
+	}
+	if s.Rols != nil {
+		tx.Where("r.role_id IN ?", s.Rols)
+	}
 	//tx := es.db.Where("establishment_id = ?", estID)
 	if q != "" {
 		tx = tx.Order(s.Query())
@@ -86,21 +96,25 @@ func (es emplStore) Search(s *model.SearchEMPL) ([]model.User, error) {
 	users := []model.User{}
 	tx := es.db.Model(&users).Select("users.id", "users.email", "users.name",
 		"r.establishment_id", "r.role_id", "r.is_active").
-		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id")
+		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id").Where("r.role_id > ?", model.USER)
 	switch s.Status {
 	case model.ACTIVE:
 		tx = tx.Where("r.is_active = true")
 	case model.NOACTVIE:
 		tx = tx.Where("r.is_active = false")
 	case model.ANY:
+		tx = tx.Where("r.is_active IS NOT NULL")
 	default:
 		return nil, errors.New("no status")
 	}
 	if s.Rols != nil {
 		tx.Where("r.role_id IN ?", s.Rols)
 	}
-	if s.Ests != nil {
-		tx.Where("r.establishment_id IN ?", s.Ests)
+	if s.Establishments != nil {
+		tx.Where("r.establishment_id IN ?", s.Establishments)
+	}
+	if s.Querys != "" {
+		tx.Where(s.Querys)
 	}
 	q := s.Query()
 	if q != "" {

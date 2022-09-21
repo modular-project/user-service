@@ -32,7 +32,7 @@ func (puc ProductUC) Create(c echo.Context) error {
 	if err := c.Bind(&p); err != nil {
 		return pkg.NewAppError("Fail at bind product", err, http.StatusBadRequest)
 	}
-	id, err := puc.ps.Create(context.TODO(), &p)
+	id, err := puc.ps.Create(c.Request().Context(), &p)
 	if err != nil {
 		return err
 	}

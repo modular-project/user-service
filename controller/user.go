@@ -26,7 +26,7 @@ type UserStorager interface {
 	ChangePassword(UserID uint, password *string) error
 	FindByEmail(*string) (model.User, error) //return Password and ID
 	Verify(UserID uint) error
-	IsEmployee(userID uint) (bool, error)
+	IsEmployee(userID uint) (model.RoleID, bool, error)
 }
 
 type VerificationStorager interface {
@@ -121,11 +121,11 @@ func (st UserService) UpdateData(user *model.User) error {
 	if user.ID == 0 {
 		return pkg.NewAppError("user not found", nil, http.StatusBadRequest)
 	}
-	is, err := st.user.IsEmployee(user.ID)
+	rID, is, err := st.user.IsEmployee(user.ID)
 	if err != nil {
 		return pkg.NewAppError("user not found", err, http.StatusInternalServerError)
 	}
-	if is {
+	if is && (!rID.IsGreater(model.MANAGER)) {
 		return pkg.NewAppError("you have an employee account", nil, http.StatusBadRequest)
 	}
 	if err := st.user.Update(user); err != nil {
