@@ -2,9 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"users-service/model"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 )
@@ -37,12 +37,11 @@ func (uuc UserUC) SignUp(c echo.Context) error {
 	var err error
 	m := &model.LogIn{}
 	if err = c.Bind(m); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return pkg.NewAppError("Fail at bind Log In", err, http.StatusBadRequest)
 	}
-	log.Printf("%+v", m)
 	err = uuc.ss.SignUp(m)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.NoContent(http.StatusCreated)
 }
@@ -51,24 +50,24 @@ func (uuc UserUC) SignIn(c echo.Context) error {
 	var err error
 	m := &model.LogIn{}
 	if err = c.Bind(m); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at bind: %s", err)))
+		return pkg.NewAppError("Fail at bind Log In", err, http.StatusBadRequest)
 	}
 	token, refresh, err := uuc.ss.SignIn(m)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at SignIn: %s", err)))
+		return err
 	}
-	createRefreshCookie(c, refresh)
+	createRefreshCookie(c, refresh, "/api/v1/user/refresh/")
 	return c.JSON(http.StatusOK, createResponse(token))
 }
 
 func (uuc UserUC) Refresh(c echo.Context) error {
 	fgp, err := c.Cookie("refresh")
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at get cookie refresh: %s", err)))
+		return pkg.NewAppError("Fail at get cookie", err, http.StatusBadRequest)
 	}
 	token, err := uuc.ss.Refresh(&fgp.Value)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at ValidateRefreshToken: %s", err)))
+		return err
 	}
 	return c.JSON(http.StatusOK, createResponse(token))
 }
@@ -76,7 +75,7 @@ func (uuc UserUC) Refresh(c echo.Context) error {
 func (uuc UserUC) GetUserData(c echo.Context) error {
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at getUserIDFromContext: %s", err)))
+		return err
 	}
 	m, err := uuc.us.Data(userID)
 	if err != nil {
@@ -90,16 +89,16 @@ func (uuc UserUC) GetUserData(c echo.Context) error {
 func (uuc UserUC) UpdateUserData(c echo.Context) error {
 	m := &model.User{}
 	if err := c.Bind(m); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at bind data: %s", err)))
+		return pkg.NewAppError("Fail at bind user", err, http.StatusBadRequest)
 	}
 	id, err := getUserIDFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at get user id from context: %s", err)))
+		return err
 	}
 	m.ID = id
 	err = uuc.us.UpdateData(m)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at update user: %s", err)))
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
@@ -107,11 +106,11 @@ func (uuc UserUC) UpdateUserData(c echo.Context) error {
 func (uuc UserUC) SignOut(c echo.Context) error {
 	fgp, err := c.Cookie("refresh")
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at get refresh cookie: %s", err)))
+		return pkg.NewAppError("Fail at get cookie", err, http.StatusBadRequest)
 	}
 	err = uuc.ss.SignOut(&fgp.Value)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at SignOut: %s", err)))
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
@@ -119,12 +118,12 @@ func (uuc UserUC) SignOut(c echo.Context) error {
 func (uuc UserUC) VerifyUser(c echo.Context) error {
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at getUserIDFromContext: %s", err)))
+		return err
 	}
 	code := c.QueryParam("code")
 	err = uuc.us.Verify(userID, code)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at VerifyUser: %s", err)))
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
@@ -132,11 +131,11 @@ func (uuc UserUC) VerifyUser(c echo.Context) error {
 func (uuc UserUC) GenerateVerificationCode(c echo.Context) error {
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at getUserIDFromContext: %s", err)))
+		return err
 	}
 	err = uuc.us.GenerateCode(userID)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at Generate verification code: %s", err)))
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
@@ -144,15 +143,15 @@ func (uuc UserUC) GenerateVerificationCode(c echo.Context) error {
 func (uuc UserUC) ChangePassword(c echo.Context) error {
 	m := &model.User{}
 	if err := c.Bind(m); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at bind data: %s", err)))
+		return pkg.NewAppError("Fail at bind user", err, http.StatusBadRequest)
 	}
 	id, err := getUserIDFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at get user id from context: %s", err)))
+		return err
 	}
 	err = uuc.us.ChangePassword(id, &m.Password)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("error at change user password: %s", err)))
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }

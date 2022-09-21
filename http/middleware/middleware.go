@@ -1,64 +1,83 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+	"users-service/model"
 	"users-service/pkg"
 
 	"github.com/gbrlsnchs/jwt"
 	"github.com/labstack/echo"
 )
 
-var (
-	ErrUserNotLoggedIn      = errors.New("user is not logged in")
-	ErrBearerTokenNotFormat = errors.New("bearer token not in proper format")
-)
-
 type Validater interface {
 	Validate(*string) (*jwt.JWT, error)
 }
 
+type Permissioner interface {
+	UserRole(uint) (model.UserRole, error)
+	Kitchen(uint) (uint, error)
+}
 type Middleware struct {
 	va Validater
+	pe Permissioner
 }
 
-func NewMiddleware(va Validater) Middleware {
-	return Middleware{va: va}
+func NewMiddleware(va Validater, pe Permissioner) Middleware {
+	return Middleware{va: va, pe: pe}
+}
+
+// Errors handler all errors and checks them to return an response error
+func (mid Middleware) Errors(err error, c echo.Context) {
+	code, msg := pkg.FindError(err)
+	if msg == "" {
+		msg = http.StatusText(code)
+	}
+	res := echo.Map{"message": msg}
+
+	if !c.Response().Committed {
+		// Return response with message in JSON
+		if c.Request().Method == http.MethodHead {
+			err = c.NoContent(code)
+		} else {
+			err = c.JSON(code, res)
+		}
+		if err != nil {
+			// Log new error
+			c.Logger().Error(err)
+		}
+	}
+
 }
 
 func (mid Middleware) authentication(c echo.Context) (jwt.JWT, error) {
-	if bearer := c.Request().Header.Get("Authorization"); bearer != "" {
-		splitToken := strings.Split(bearer, "Bearer")
-		if len(splitToken) != 2 {
-			return jwt.JWT{}, ErrBearerTokenNotFormat
-		}
-		t := strings.TrimSpace(splitToken[1])
-		token, err := mid.va.Validate(&t)
-		if err != nil {
-			return jwt.JWT{}, err
-		}
-		return *token, nil
+	bearer := c.Request().Header.Get("Authorization")
+	if bearer == "" {
+		return jwt.JWT{}, pkg.NewAppError("user is not logged in", nil, http.StatusUnauthorized)
 	}
-	return jwt.JWT{}, ErrUserNotLoggedIn
-}
+	splitToken := strings.Split(bearer, "Bearer")
+	if len(splitToken) != 2 {
+		return jwt.JWT{}, pkg.NewAppError("bearer token not in proper format", nil, http.StatusUnauthorized)
+	}
+	t := strings.TrimSpace(splitToken[1])
+	token, err := mid.va.Validate(&t)
+	if err != nil {
+		return jwt.JWT{}, fmt.Errorf("mid.va.Validate: %w", err)
+	}
+	return *token, nil
 
-func createResponse(message string) map[string]interface{} {
-	return map[string]interface{}{
-		"msg": message,
-	}
 }
 
 func (mid Middleware) Login(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		token, err := mid.authentication(c)
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, createResponse(fmt.Sprintf("user not logged in: %s", err)))
+			return err
 		}
 		ty := token.Public()["utp"].(float64)
 		if pkg.USER != pkg.UserType(ty) {
-			return c.JSON(http.StatusUnauthorized, createResponse("not a user"))
+			return pkg.NewAppError("it's not a user account", nil, http.StatusUnauthorized)
 		}
 		c.Set("token", token)
 		return next(c)
@@ -69,11 +88,11 @@ func (mid Middleware) KitchenLogin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		token, err := mid.authentication(c)
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, createResponse(fmt.Sprintf("user not logged in: %s", err)))
+			return err
 		}
 		ty := token.Public()["utp"].(float64)
 		if pkg.KITCHEN != pkg.UserType(ty) {
-			return c.JSON(http.StatusUnauthorized, createResponse("not a kitchen"))
+			return pkg.NewAppError("it's not a kitchen account", nil, http.StatusUnauthorized)
 		}
 		c.Set("token", token)
 		return next(c)

@@ -1,23 +1,23 @@
 package controller
 
 import (
-	"errors"
-	"fmt"
+	"net/http"
 	"strings"
 	"time"
 	"users-service/model"
+	"users-service/pkg"
 )
 
-var (
-	ErrEmailNotValid      = errors.New("email not valid")
-	ErrPasswordNotValid   = errors.New("password not valid")
-	ErrEmailAlreadyInUsed = errors.New("email already in use")
-	ErrWrongPassword      = errors.New("wrong password")
-	ErrUserNotFound       = errors.New("user not found")
-	ErrCodeNotFound       = errors.New("code not found")
-	ErrExpiredCode        = errors.New("expired code")
-	ErrInvalidCode        = errors.New("invalid code")
-)
+// var (
+// 	ErrEmailNotValid      = pkg.AppError{MSG: "email not valid", Code: http.StatusNotFound}
+// 	ErrPasswordNotValid   = pkg.AppError{MSG: "password not valid", Code: http.StatusNotFound}
+// 	ErrEmailAlreadyInUsed = pkg.AppError{MSG: "email already in use", Code: http.StatusNotFound}
+// 	ErrWrongPassword      = pkg.AppError{MSG: "wrong password", Code: http.StatusNotFound}
+// 	ErrUserNotFound       = pkg.AppError{MSG: "user not found", Code: http.StatusNotFound}
+// 	ErrCodeNotFound       = pkg.AppError{MSG: "code not found", Code: http.StatusNotFound}
+// 	ErrExpiredCode        = pkg.AppError{MSG: "expired code", Code: http.StatusNotFound}
+// 	ErrInvalidCode        = pkg.AppError{MSG: "invalid code", Code: http.StatusNotFound}
+// )
 
 type UserStorager interface {
 	Update(*model.User) error         // Update
@@ -26,7 +26,7 @@ type UserStorager interface {
 	ChangePassword(UserID uint, password *string) error
 	FindByEmail(*string) (model.User, error) //return Password and ID
 	Verify(UserID uint) error
-	IsEmployee(userID uint) bool
+	IsEmployee(userID uint) (model.RoleID, bool, error)
 }
 
 type VerificationStorager interface {
@@ -55,34 +55,37 @@ func (st UserService) Data(ID uint) (model.User, error) {
 
 func (st UserService) Verify(userID uint, code string) error {
 	if code == "" {
-		return ErrNullCode
+		return pkg.NewAppError("empty code", nil, http.StatusBadRequest)
 	}
 	ver, err := st.ver.Find(userID)
 	if err != nil {
-		return err
+		return pkg.NewAppError("user not found", err, http.StatusBadRequest)
 	}
 	if ver.ExpiresAt.Before(time.Now()) {
-		return ErrExpiredCode
+		return pkg.NewAppError("expired code", nil, http.StatusBadRequest)
 	}
 	if !strings.EqualFold(code, ver.Code) {
-		return ErrInvalidCode
+		return pkg.NewAppError("invalid code", nil, http.StatusBadRequest)
 	}
 	err = st.user.Verify(userID)
 	if err != nil {
-		return fmt.Errorf("st.user.Verify: %w", err)
+		return pkg.NewAppError("failed to verify user", err, http.StatusInternalServerError)
 	}
-	return st.ver.Delete(userID)
+	if err = st.ver.Delete(userID); err != nil {
+		return pkg.NewAppError("failed to remove code", err, http.StatusInternalServerError)
+	}
+	return nil
 }
 
 func (st UserService) GenerateCode(userID uint) error {
 	user, err := st.user.Find(userID)
 	if err != nil {
-		return fmt.Errorf("error at User.Find: %w", err)
+		return pkg.NewAppError("user not found", err, http.StatusBadRequest)
 	}
 	code := generateRandomString(CODESIZE)
 	err = st.mail.Confirm(user.Email, code)
 	if err != nil {
-		return fmt.Errorf("error at send email: %w", err)
+		return pkg.NewAppError("failed to send email", err, http.StatusInternalServerError)
 	}
 	m := model.Verification{
 		UserID:    userID,
@@ -91,32 +94,42 @@ func (st UserService) GenerateCode(userID uint) error {
 	}
 	err = st.ver.Create(&m)
 	if err != nil {
-		return fmt.Errorf("error at create verification in DB: %w", err)
+		return pkg.NewAppError("failed to save the code", err, http.StatusInternalServerError)
 	}
 	return nil
 }
 
 func (st UserService) ChangePassword(userID uint, password *string) error {
 	if password == nil {
-		return ErrNullValue
+		return pkg.NewAppError("empty password", nil, http.StatusBadRequest)
 	}
 	if !isPasswordValid(*password) {
-		return ErrPasswordNotValid
+		return pkg.NewAppError("invalid password", nil, http.StatusBadRequest)
 	}
 	pwdB, err := hashAndSalt([]byte(*password))
 	if err != nil {
-		return fmt.Errorf("error at hashAndSalt password: %w", err)
+		return pkg.NewAppError("failed to encrypt password", err, http.StatusInternalServerError)
 	}
 	pwd := string(pwdB)
-	return st.user.ChangePassword(userID, &pwd)
+	if err = st.user.ChangePassword(userID, &pwd); err != nil {
+		return pkg.NewAppError("failed to save password", err, http.StatusInternalServerError)
+	}
+	return nil
 }
 
 func (st UserService) UpdateData(user *model.User) error {
 	if user.ID == 0 {
-		return ErrUserNotFound
+		return pkg.NewAppError("user not found", nil, http.StatusBadRequest)
 	}
-	if st.user.IsEmployee(user.ID) {
-		return ErrUnauthorizedUser
+	rID, is, err := st.user.IsEmployee(user.ID)
+	if err != nil {
+		return pkg.NewAppError("user not found", err, http.StatusInternalServerError)
 	}
-	return st.user.Update(user)
+	if is && (!rID.IsGreater(model.MANAGER)) {
+		return pkg.NewAppError("you have an employee account", nil, http.StatusBadRequest)
+	}
+	if err := st.user.Update(user); err != nil {
+		return pkg.NewAppError("failed to update user", err, http.StatusInternalServerError)
+	}
+	return nil
 }

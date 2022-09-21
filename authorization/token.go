@@ -1,19 +1,16 @@
 package authorization
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
 	"time"
+	"users-service/pkg"
 
 	"github.com/gbrlsnchs/jwt"
 )
 
 const (
 	iss string = "GoRaSa"
-)
-
-var (
-	ErrNullToken = errors.New("null token")
 )
 
 type Token struct {
@@ -24,21 +21,22 @@ func NewToken() Token {
 	return Token{_signer}
 }
 
-// GenerateToken .
+// Create return a jwt string to validate sessions
 func (to Token) Create(uid, utp uint) (string, error) {
 	claim := jwt.Options{
-		ExpirationTime: time.Now().Add(15 * time.Minute),
+		ExpirationTime: time.Now().Add(150 * time.Minute),
 		Issuer:         iss,
 		Public:         map[string]interface{}{"uid": uid, "utp": utp},
 	}
 	token, err := jwt.Sign(to.signer, &claim)
 	if err != nil {
-		return "", fmt.Errorf("error at jwt.Sign: %s", err)
+		return "", pkg.NewAppError("failed to create token", err, http.StatusInternalServerError)
 	}
 
 	return token, nil
 }
 
+// CreateRefresh return a jwt string to refresh sessions
 func (to Token) CreateRefresh(id, uid uint, fgp *string) (string, error) {
 	claim := jwt.Options{
 		ExpirationTime: time.Now().Add(168 * time.Hour),
@@ -51,7 +49,7 @@ func (to Token) CreateRefresh(id, uid uint, fgp *string) (string, error) {
 	}
 	token, err := jwt.Sign(to.signer, &claim)
 	if err != nil {
-		return "", err
+		return "", pkg.NewAppError("failed to create token", err, http.StatusInternalServerError)
 	}
 
 	return token, nil
@@ -60,18 +58,21 @@ func (to Token) CreateRefresh(id, uid uint, fgp *string) (string, error) {
 // ValidateToken .
 func (to Token) Validate(t *string) (*jwt.JWT, error) {
 	if t == nil {
-		return nil, ErrNullToken
+		return nil, pkg.NewAppError("empty token", nil, http.StatusUnauthorized)
 	}
 	jot, err := jwt.FromString(*t)
 	if err != nil {
-		return &jwt.JWT{}, fmt.Errorf("error at jwt.FromString(%s) : %w", *t, err)
+		return &jwt.JWT{}, pkg.NewAppError("invalid token", fmt.Errorf("jwt.FromString: %w", err), http.StatusUnauthorized)
 	}
 	err = jot.Verify(to.signer)
 	if err != nil {
-		return &jwt.JWT{}, fmt.Errorf("error at jot.Verify : %w", err)
+		return &jwt.JWT{}, pkg.NewAppError("invalid token", fmt.Errorf("jot.Verify: %w", err), http.StatusUnauthorized)
 	}
 	err = jot.Validate(jwt.ExpirationTimeValidator(time.Now()), jwt.IssuerValidator(iss), jwt.AlgorithmValidator(jwt.MethodRS512))
-	return jot, err
+	if err != nil {
+		return nil, pkg.NewAppError("invalid token", fmt.Errorf("jot.Validate: %w", err), http.StatusUnauthorized)
+	}
+	return jot, nil
 }
 
 // func HashFgp(fgp []byte) []byte {

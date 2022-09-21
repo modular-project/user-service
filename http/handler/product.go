@@ -2,9 +2,9 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 	"github.com/modular-project/protobuffers/information/product"
@@ -30,11 +30,11 @@ func NewProductUC(ps ProductServicer) ProductUC {
 func (puc ProductUC) Create(c echo.Context) error {
 	p := product.Product{}
 	if err := c.Bind(&p); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return pkg.NewAppError("Fail at bind product", err, http.StatusBadRequest)
 	}
-	id, err := puc.ps.Create(context.TODO(), &p)
+	id, err := puc.ps.Create(c.Request().Context(), &p)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.JSON(http.StatusCreated, responseID(id))
 }
@@ -42,19 +42,19 @@ func (puc ProductUC) Create(c echo.Context) error {
 func (puc ProductUC) Get(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-	p, err := puc.ps.Get(context.Background(), id)
+	p, err := puc.ps.Get(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.JSON(http.StatusOK, p)
 }
 
 func (pub ProductUC) GetAll(c echo.Context) error {
-	ps, err := pub.ps.GetAll(context.Background())
+	ps, err := pub.ps.GetAll(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	if ps == nil {
 		c.NoContent(http.StatusOK)
@@ -68,11 +68,14 @@ func (pub ProductUC) GetInBatch(c echo.Context) error {
 	}
 	var ids IDs
 	if err := c.Bind(&ids); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(fmt.Sprintf("bind: %s", err)))
+		return pkg.NewAppError("Fail at bind ids", err, http.StatusBadRequest)
 	}
-	ps, err := pub.ps.GetInBatch(context.Background(), ids.IDs)
+	ps, err := pub.ps.GetInBatch(c.Request().Context(), ids.IDs)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
+	}
+	if ps == nil {
+		return c.NoContent(http.StatusOK)
 	}
 	return c.JSON(http.StatusOK, ps)
 }
@@ -80,11 +83,11 @@ func (pub ProductUC) GetInBatch(c echo.Context) error {
 func (pub ProductUC) Delete(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-	err = pub.ps.Delete(context.Background(), id)
+	err = pub.ps.Delete(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
@@ -92,15 +95,15 @@ func (pub ProductUC) Delete(c echo.Context) error {
 func (pub ProductUC) Update(c echo.Context) error {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 0)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
 	p := product.Product{}
 	if err := c.Bind(&p); err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return pkg.NewAppError("Fail at bind product", err, http.StatusBadRequest)
 	}
-	id, err = pub.ps.Update(context.Background(), id, &p)
+	id, err = pub.ps.Update(c.Request().Context(), id, &p)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, createResponse(err.Error()))
+		return err
 	}
 	return c.JSON(http.StatusOK, responseID(id))
 }

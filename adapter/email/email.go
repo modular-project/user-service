@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/mail"
 	"net/smtp"
 	"os"
@@ -175,8 +176,11 @@ func (m Mail) sendMessage(message string, to, from mail.Address) error {
 }
 
 func (m Mail) Confirm(dest, code string) error {
-	if dest == "" || code == "" {
-		return pkg.ErrNullValue
+	if code == "" {
+		return pkg.NewAppError("empty code", nil, http.StatusBadRequest)
+	}
+	if dest == "" {
+		return pkg.NewAppError("empty address", nil, http.StatusBadRequest)
 	}
 	from := mail.Address{
 		Name:    app,
@@ -196,7 +200,7 @@ func (m Mail) Confirm(dest, code string) error {
 		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 	message += "\r\n"
-	t, err := template.ParseFiles("templates/confirm.html")
+	t, err := template.ParseFiles("web/confirm.html")
 	if err != nil {
 		return err
 	}

@@ -1,11 +1,14 @@
-package controller_test
+package controller
 
 import (
-	"errors"
+	"fmt"
+	"net/http"
 	"testing"
-	"users-service/controller"
 	"users-service/mocks"
 	"users-service/model"
+	"users-service/pkg"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCanHire(t *testing.T) {
@@ -42,64 +45,63 @@ func TestCanHire(t *testing.T) {
 	}
 
 	tests := []struct {
-		giveID    uint
-		giveEmail string
-		giveRole  model.UserRole
-		wantErr   error
+		giveFrom    model.UserRole
+		giveEmail   string
+		giveRole    model.UserRole
+		wantErrCode int
 	}{
 		{
-			giveID:    1,
+			giveFrom:  model.UserRole{RoleID: model.OWNER},
 			giveEmail: "user@mail.com",
 			giveRole:  model.UserRole{RoleID: model.MANAGER, EstablishmentID: 3, Salary: 140.33},
 		}, {
-			giveID:    1,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
-			wantErr:   controller.ErrEstablishNecesary,
+			giveFrom:    model.UserRole{RoleID: model.OWNER},
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    1,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.ADMIN, EstablishmentID: 3, Salary: 140.33},
-			wantErr:   controller.ErrCannotBeAssigned,
+			giveFrom:    model.UserRole{RoleID: model.OWNER},
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.ADMIN, EstablishmentID: 3, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    1,
-			giveEmail: "manager@mail.com",
-			giveRole:  model.UserRole{RoleID: model.WAITER, EstablishmentID: 3, Salary: 140.33},
-			wantErr:   controller.ErrAlreadyEmployee,
+			giveFrom:    model.UserRole{RoleID: model.OWNER},
+			giveEmail:   "manager@mail.com",
+			giveRole:    model.UserRole{RoleID: model.WAITER, EstablishmentID: 3, Salary: 140.33},
+			wantErrCode: http.StatusBadRequest,
 		}, {
-			giveID:    1,
+			giveFrom:  model.UserRole{RoleID: model.OWNER},
 			giveEmail: "user@mail.com",
 			giveRole:  model.UserRole{RoleID: model.ADMIN, Salary: 140.33},
 		}, {
-			giveID:    1,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.OWNER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
+			giveFrom:    model.UserRole{RoleID: model.OWNER},
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.OWNER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    3,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.OWNER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
+			giveFrom:    model.UserRole{},
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.OWNER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
 		}, {
-			giveID:    5,
+			giveFrom:    model.UserRole{RoleID: model.WAITER, EstablishmentID: 1},
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.WAITER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
+		}, {
+			giveFrom:    model.UserRole{RoleID: model.MANAGER, EstablishmentID: 1},
+			giveEmail:   "user@mail.com",
+			giveRole:    model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
+			wantErrCode: http.StatusForbidden,
+		}, {
+			giveFrom:  model.UserRole{RoleID: model.MANAGER, EstablishmentID: 1},
 			giveEmail: "user@mail.com",
 			giveRole:  model.UserRole{RoleID: model.WAITER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
 		}, {
-			giveID:    2,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.MANAGER, Salary: 140.33},
-			wantErr:   controller.ErrUnauthorizedUser,
-		}, {
-			giveID:    2,
-			giveEmail: "user@mail.com",
-			giveRole:  model.UserRole{RoleID: model.WAITER, Salary: 140.33},
-			wantErr:   nil,
-		}, {
-			giveID:    1,
-			giveEmail: "noverified@mail.com",
-			giveRole:  model.UserRole{RoleID: model.ADMIN, Salary: 140.33},
-			wantErr:   controller.ErrUserIsNotVerified,
+			giveFrom:    model.UserRole{RoleID: model.OWNER},
+			giveEmail:   "noverified@mail.com",
+			giveRole:    model.UserRole{RoleID: model.ADMIN, Salary: 140.33},
+			wantErrCode: http.StatusBadRequest,
 		},
 	}
 	uByID := make(map[uint]*model.User, len(users))
@@ -110,28 +112,19 @@ func TestCanHire(t *testing.T) {
 		uByEmail[u.Email] = &u
 	}
 	for i, tt := range tests {
-		j := mocks.NewJobStorager(t)
-		p := controller.NewPermission(j)
-		uID := uByID[tt.giveID]
+		j := mocks.NewPermissionStorage(t)
+		p := NewPermission(j)
 		uEmail := uByEmail[tt.giveEmail]
-		j.On("Job", uID.ID).Return(model.UserRole{
-			UserID:          uID.ID,
-			RoleID:          uID.RoleID,
-			EstablishmentID: uID.EstablishmentID,
-			IsActive:        uID.IsActive,
-		}, nil)
 		j.On("Find", uEmail.Email).Return(model.User{
 			Model:      model.Model{ID: uEmail.ID},
 			IsVerified: uEmail.IsVerified,
 			IsActive:   uEmail.IsActive,
 		}, nil)
-		err := p.CanHire(tt.giveID, tt.giveEmail, &tt.giveRole)
-		if !errors.Is(err, tt.wantErr) {
-			t.Logf("%d - %d: %s", i, tt.giveID, tt.giveEmail)
-			t.Errorf("got error: %s, want error: %s", err, tt.wantErr)
-		} else {
-			j.ExpectedCalls = nil
-		}
+		es := NewEmployeeService(nil, nil, p)
+		err := es.canHire(&tt.giveFrom, &tt.giveRole, tt.giveEmail)
+		code, _ := pkg.FindError(err)
+		assert.Equal(t, tt.wantErrCode, code, fmt.Sprintf("Index: %d, uID: %d, email: %s", i, tt.giveFrom.ID, tt.giveEmail))
+		j.ExpectedCalls = nil
 	}
 
 }

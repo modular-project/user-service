@@ -41,6 +41,62 @@ func (_m *Canner) CanUpdate(from uint, target uint) error {
 	return r0
 }
 
+// Equal provides a mock function with given fields: uID, rID
+func (_m *Canner) Equal(uID uint, rID model.RoleID) (uint, error) {
+	ret := _m.Called(uID, rID)
+
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(uint, model.RoleID) uint); ok {
+		r0 = rf(uID, rID)
+	} else {
+		r0 = ret.Get(0).(uint)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint, model.RoleID) error); ok {
+		r1 = rf(uID, rID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Greater provides a mock function with given fields: uID, rID
+func (_m *Canner) Greater(uID uint, rID model.RoleID) error {
+	ret := _m.Called(uID, rID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uint, model.RoleID) error); ok {
+		r0 = rf(uID, rID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Job provides a mock function with given fields: _a0
+func (_m *Canner) Job(_a0 uint) (model.UserRole, error) {
+	ret := _m.Called(_a0)
+
+	var r0 model.UserRole
+	if rf, ok := ret.Get(0).(func(uint) model.UserRole); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(model.UserRole)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewCanner interface {
 	mock.TestingT
 	Cleanup(func())

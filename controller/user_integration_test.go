@@ -1,13 +1,17 @@
 package controller_test
 
 import (
-	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"testing"
 	"users-service/authorization"
 	"users-service/controller"
 	"users-service/model"
+	"users-service/pkg"
 	"users-service/storage"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var TestConfigDB storage.DBConnection = storage.DBConnection{
@@ -40,41 +44,40 @@ func TestSingUpIntegration(t *testing.T) {
 	t.Cleanup(func() { dropsTables(t, models...) })
 	//insertUsers(uc)
 	testCase := []struct {
-		in   model.LogIn
-		want error
+		in       model.LogIn
+		wantCode int
 	}{
 		{model.LogIn{
 			User:     "cualquiera",
 			Password: "Password12345.",
-		}, controller.ErrEmailNotValid},
+		}, http.StatusBadRequest},
 		{model.LogIn{
 			User:     "usuario@mail.com",
 			Password: "as",
-		}, controller.ErrPasswordNotValid},
+		}, http.StatusBadRequest},
 		{model.LogIn{
 			User:     "usuario@mail.com",
 			Password: "Password12345.",
-		}, nil},
+		}, 0},
 		{model.LogIn{
 			User:     "usuario@mail.com",
 			Password: "Password12345.",
-		}, controller.ErrEmailAlreadyInUsed},
+		}, http.StatusBadRequest},
 		{model.LogIn{
 			User:     "usuario1@mail.com",
 			Password: " ",
-		}, controller.ErrPasswordNotValid},
+		}, http.StatusBadRequest},
 		{model.LogIn{
 			User:     "usuario1@mail.com",
 			Password: "Password12345. ",
-		}, nil},
+		}, 0},
 	}
 
-	for _, tc := range testCase {
+	for i, tc := range testCase {
 		log.Printf("%+v", tc.in)
 		err := uc.SignUp(&tc.in)
-		if err != tc.want {
-			t.Errorf("Got: %s, want: %s", err, tc.want)
-		}
+		code, _ := pkg.FindError(err)
+		assert.Equal(t, tc.wantCode, code, fmt.Sprintf("%d - %v", i, err))
 	}
 }
 
@@ -98,32 +101,30 @@ func TestSingInIntegration(t *testing.T) {
 	}
 	insertUsers(uc)
 	testCase := []struct {
-		in   model.LogIn
-		want error
+		in       model.LogIn
+		wantCode int
 	}{
 		{
-			model.LogIn{User: "valid@account.com", Password: "PassOk1234. "}, nil,
+			model.LogIn{User: "valid@account.com", Password: "PassOk1234. "}, 0,
 		},
 		{
-			model.LogIn{User: "notAnEmail", Password: "ValidPass1234."}, controller.ErrEmailNotValid,
+			model.LogIn{User: "notAnEmail", Password: "ValidPass1234."}, http.StatusBadRequest,
 		},
 		{
-			model.LogIn{User: "NotAnCreatedAccount@mail.com", Password: "ValidPass123."}, controller.ErrUserNotFound,
+			model.LogIn{User: "NotAnCreatedAccount@mail.com", Password: "ValidPass123."}, http.StatusBadRequest,
 		},
 		{
-			model.LogIn{User: "valid@account.com", Password: "WrongPass123."}, controller.ErrWrongPassword,
+			model.LogIn{User: "valid@account.com", Password: "WrongPass123."}, http.StatusBadRequest,
 		},
 		{
-			model.LogIn{User: "valid@account.com", Password: "notapass"}, controller.ErrPasswordNotValid,
+			model.LogIn{User: "valid@account.com", Password: "notapass"}, http.StatusBadRequest,
 		},
 	}
 
 	for _, tc := range testCase {
-		_, _, gotErr := uc.SignIn(&tc.in)
-		if !errors.Is(gotErr, tc.want) {
-			t.Logf("%+v", tc)
-			t.Errorf("Got: %s, want: %s", gotErr, tc.want)
-		}
+		_, _, err := uc.SignIn(&tc.in)
+		gotErr, _ := pkg.FindError(err)
+		assert.Equal(t, tc.wantCode, gotErr)
 	}
 }
 

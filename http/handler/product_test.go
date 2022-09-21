@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"users-service/mocks"
+	"users-service/pkg"
 
 	"github.com/labstack/echo"
 	"github.com/modular-project/protobuffers/information/product"
@@ -21,6 +22,7 @@ func TestCreateProduct(t *testing.T) {
 		give     product.Product
 		wantCode int
 		wantID   uint
+		wantErr  bool
 	}{
 		{
 			give: product.Product{
@@ -31,17 +33,19 @@ func TestCreateProduct(t *testing.T) {
 			},
 			wantCode: http.StatusCreated,
 			wantID:   1,
+			wantErr:  false,
 		}, {
 			give:     product.Product{Name: "Empty"},
 			wantCode: http.StatusBadRequest,
+			wantErr:  true,
 		},
 	}
 	assert := assert.New(t)
 	ps := mocks.NewProductServicer(t)
-	ps.On("Create", mock.Anything, mock.Anything).Return(uint(1), nil).Once()
-	ps.On("Create", mock.Anything, mock.Anything).Return(uint(0), errors.New("fail at create")).Once()
+	ps.On("Create", mock.Anything, mock.Anything).Return(uint64(1), nil).Once()
+	ps.On("Create", mock.Anything, mock.Anything).Return(uint64(0), pkg.NewAppError("Fail at create", nil, http.StatusBadRequest)).Once()
 	puc := NewProductUC(ps)
-	for _, tt := range tests {
+	for i, tt := range tests {
 
 		data, err := json.Marshal(tt.give)
 		if err != nil {
@@ -53,9 +57,16 @@ func TestCreateProduct(t *testing.T) {
 		w := httptest.NewRecorder()
 		e := echo.New()
 		ctx := e.NewContext(r, w)
-		if assert.NoError(puc.Create(ctx)) {
-			assert.Equal(ctx.Response().Status, tt.wantCode)
+		t.Log("CASE: ", i)
+		gotErr := puc.Create(ctx)
+		if !tt.wantErr {
+			assert.Equal(tt.wantCode, w.Code)
+			assert.NoError(gotErr)
+		} else {
+			//var err pkg.BadErr
+			assert.Error(gotErr)
 		}
+
 	}
 }
 
@@ -64,6 +75,7 @@ func TestGetProduct(t *testing.T) {
 		give        uint64
 		wantCode    int
 		wantPorudct product.Product
+		wantErr     bool
 	}{
 		{
 			give:     1,
@@ -78,6 +90,7 @@ func TestGetProduct(t *testing.T) {
 		}, {
 			give:     2,
 			wantCode: http.StatusBadRequest,
+			wantErr:  true,
 		},
 	}
 	assert := assert.New(t)
@@ -93,7 +106,11 @@ func TestGetProduct(t *testing.T) {
 		c.SetPath("api/v1/product/:id")
 		c.SetParamNames("id")
 		c.SetParamValues(fmt.Sprint(tt.give))
-		if assert.NoError(h.Get(c)) {
+		gotErr := h.Get(c)
+		if tt.wantErr {
+			assert.Error(gotErr)
+		} else {
+			assert.NoError(gotErr)
 			assert.Equal(tt.wantCode, rec.Code)
 			if tt.wantCode == http.StatusOK {
 				p, err := json.Marshal(tt.wantPorudct)
@@ -101,7 +118,9 @@ func TestGetProduct(t *testing.T) {
 					assert.Equal(p, rec.Body.Bytes()[:len(rec.Body.Bytes())-1])
 				}
 			}
+
 		}
+
 	}
 }
 
