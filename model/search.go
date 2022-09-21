@@ -19,7 +19,7 @@ const (
 	NAME By = iota
 	EMAIL
 	ROL
-	EST
+	STATUS
 )
 
 const (
@@ -34,16 +34,16 @@ type OrderBy struct {
 }
 type Search struct {
 	OrderBys []OrderBy `json:"order,omitempty"`
-
-	Limit  int `json:"limit,omitempty"`
-	Offset int `json:"offset,omitempty"`
+	Status   `json:"status"`
+	Limit    int `json:"limit,omitempty"`
+	Offset   int `json:"offset,omitempty"`
+	Querys   string
+	Rols     []uint `json:"roles,omitempty"`
 }
 
 type SearchEMPL struct {
 	Search
-	Status `json:"status"`
-	Rols   []uint `json:"roles,omitempty"`
-	Ests   []uint `json:"ests,omitempty"`
+	Establishments []uint `json:"ests,omitempty"`
 }
 
 func (o OrderBy) get() string {
@@ -59,8 +59,8 @@ func (o OrderBy) get() string {
 		order = "email"
 	case ROL:
 		order = "role_id"
-	case EST:
-		order = "establishment_id"
+	case STATUS:
+		order = "is_active"
 	default:
 		return ""
 	}

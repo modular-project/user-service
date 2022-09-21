@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"users-service/model"
 	"users-service/pkg"
@@ -44,6 +45,15 @@ func getUserRoleFromContext(c echo.Context) (model.UserRole, error) {
 		return model.UserRole{}, pkg.NewAppError("user don't have a role", nil, http.StatusUnauthorized)
 	}
 	return ur, nil
+}
+
+func getKitchenEstablishmentFromContext(c echo.Context) (uint, error) {
+	log.Println(c.Get("eID"))
+	eID, ok := c.Get("eID").(uint)
+	if !ok {
+		return 0, pkg.NewAppError("user don't have a role", nil, http.StatusUnauthorized)
+	}
+	return eID, nil
 }
 
 func getUserIDFromContext(c echo.Context) (uint, error) {

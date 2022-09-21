@@ -14,6 +14,13 @@ const (
 	WAITER
 )
 
+const (
+	LOCAL OrderType = iota
+	DELIVERY
+)
+
+type OrderType int
+
 type RoleID uint
 
 type Model struct {

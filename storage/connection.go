@@ -37,7 +37,7 @@ func getErrorFromResult(tx *gorm.DB) error {
 
 func newPostgresDB(u *DBConnection) error {
 	var err error
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable ",
 		u.Host, u.User, u.Password, u.NameDB, u.Port)
 	_db, err = gorm.Open(postgres.Open(dsn))
 	if _db == nil {

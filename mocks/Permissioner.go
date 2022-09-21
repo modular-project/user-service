@@ -13,6 +13,27 @@ type Permissioner struct {
 	mock.Mock
 }
 
+// Kitchen provides a mock function with given fields: _a0
+func (_m *Permissioner) Kitchen(_a0 uint) (uint, error) {
+	ret := _m.Called(_a0)
+
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(uint) uint); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(uint)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UserRole provides a mock function with given fields: _a0
 func (_m *Permissioner) UserRole(_a0 uint) (model.UserRole, error) {
 	ret := _m.Called(_a0)

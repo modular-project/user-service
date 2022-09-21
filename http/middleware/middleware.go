@@ -17,6 +17,7 @@ type Validater interface {
 
 type Permissioner interface {
 	UserRole(uint) (model.UserRole, error)
+	Kitchen(uint) (uint, error)
 }
 type Middleware struct {
 	va Validater
