@@ -14,6 +14,13 @@ const (
 	WAITER
 )
 
+const (
+	LOCAL OrderType = iota
+	DELIVERY
+)
+
+type OrderType int
+
 type RoleID uint
 
 type Model struct {
@@ -63,7 +70,7 @@ type UserRole struct {
 
 type Kitchen struct {
 	Model
-	User            string `json:"user,omitempty"`
+	User            string `json:"user,omitempty" gorm:"column:name"`
 	Password        string `json:"password,omitempty"`
 	EstablishmentID uint
 }

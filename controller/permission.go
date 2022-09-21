@@ -10,6 +10,7 @@ type PermissionStorage interface {
 	UserRole(uint) (model.UserRole, error)
 	Find(string) (model.User, error)
 	IsVerified(uint) (bool, error)
+	Kitchen(uint) (uint, error)
 }
 
 type permission struct {
@@ -18,6 +19,14 @@ type permission struct {
 
 func NewPermission(ps PermissionStorage) permission {
 	return permission{ps: ps}
+}
+
+func (p permission) Kitchen(kID uint) (uint, error) {
+	aID, err := p.ps.Kitchen(kID)
+	if err != nil {
+		return 0, pkg.NewAppError("kitchen not found", err, http.StatusBadRequest)
+	}
+	return aID, nil
 }
 
 func (p permission) IsVerified(uID uint) (bool, error) {

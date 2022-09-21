@@ -84,24 +84,31 @@ func (_m *UserStorager) FindByEmail(_a0 *string) (model.User, error) {
 }
 
 // IsEmployee provides a mock function with given fields: userID
-func (_m *UserStorager) IsEmployee(userID uint) (bool, error) {
+func (_m *UserStorager) IsEmployee(userID uint) (model.RoleID, bool, error) {
 	ret := _m.Called(userID)
 
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(uint) bool); ok {
+	var r0 model.RoleID
+	if rf, ok := ret.Get(0).(func(uint) model.RoleID); ok {
 		r0 = rf(userID)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Get(0).(model.RoleID)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(uint) error); ok {
+	var r1 bool
+	if rf, ok := ret.Get(1).(func(uint) bool); ok {
 		r1 = rf(userID)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(bool)
 	}
 
-	return r0, r1
+	var r2 error
+	if rf, ok := ret.Get(2).(func(uint) error); ok {
+		r2 = rf(userID)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // Update provides a mock function with given fields: _a0

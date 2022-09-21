@@ -17,6 +17,7 @@ type Validater interface {
 
 type Permissioner interface {
 	UserRole(uint) (model.UserRole, error)
+	Kitchen(uint) (uint, error)
 }
 type Middleware struct {
 	va Validater
@@ -24,7 +25,7 @@ type Middleware struct {
 }
 
 func NewMiddleware(va Validater, pe Permissioner) Middleware {
-	return Middleware{va: va}
+	return Middleware{va: va, pe: pe}
 }
 
 // Errors handler all errors and checks them to return an response error

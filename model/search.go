@@ -19,7 +19,7 @@ const (
 	NAME By = iota
 	EMAIL
 	ROL
-	EST
+	STATUS
 )
 
 const (
@@ -29,21 +29,21 @@ const (
 )
 
 type OrderBy struct {
-	By   By
-	Sort Sort
+	By   By   `json:"by,omitempty"`
+	Sort Sort `json:"sort,omitempty"`
 }
 type Search struct {
-	OrderBys []OrderBy
-
-	Limit  int
-	Offset int
+	OrderBys []OrderBy `json:"order,omitempty"`
+	Status   `json:"status"`
+	Limit    int `json:"limit,omitempty"`
+	Offset   int `json:"offset,omitempty"`
+	Querys   string
+	Rols     []uint `json:"roles,omitempty"`
 }
 
 type SearchEMPL struct {
 	Search
-	Status
-	Rols []uint `json:"roles,omitempty"`
-	Ests []uint `json:"ests,omitempty"`
+	Establishments []uint `json:"ests,omitempty"`
 }
 
 func (o OrderBy) get() string {
@@ -59,8 +59,8 @@ func (o OrderBy) get() string {
 		order = "email"
 	case ROL:
 		order = "role_id"
-	case EST:
-		order = "establishment_id"
+	case STATUS:
+		order = "is_active"
 	default:
 		return ""
 	}
@@ -73,10 +73,11 @@ func (o OrderBy) get() string {
 func (s Search) Query() string {
 	var q strings.Builder
 	for i, o := range s.OrderBys {
-		if i != 0 {
+		g := o.get()
+		if i != 0 && g != "" {
 			q.WriteString(",")
 		}
-		q.WriteString(o.get())
+		q.WriteString(g)
 	}
 	return q.String()
 }

@@ -81,11 +81,14 @@ func (us userStore) ChangePassword(id uint, pwd *string) error {
 	return nil
 }
 
-func (us userStore) IsEmployee(userID uint) (bool, error) {
+func (us userStore) IsEmployee(userID uint) (model.RoleID, bool, error) {
 	m := model.UserRole{}
-	res := us.db.Where("user_id = ?", userID).First(&m)
+	res := us.db.Select("role_id", "is_active").Where("user_id = ?", userID).Last(&m)
 	if res.Error != nil && !errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		return false, res.Error
+		return 0, false, res.Error
 	}
-	return res.RowsAffected != 0, nil
+	if m.IsActive {
+		return m.RoleID, res.RowsAffected != 0, nil
+	}
+	return 0, res.RowsAffected != 0, nil
 }

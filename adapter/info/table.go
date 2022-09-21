@@ -3,17 +3,16 @@ package info
 import (
 	"context"
 	"net/http"
-	"users-service/model"
 	"users-service/pkg"
 
 	"github.com/modular-project/protobuffers/information/table"
 	"google.golang.org/grpc"
 )
 
-type Permissioner interface {
-	Job(uint) (model.UserRole, error)
-	Greater(uint, model.RoleID) error
-}
+// type Permissioner interface {
+// 	Job(uint) (model.UserRole, error)
+// 	Greater(uint, model.RoleID) error
+// }
 
 type tableService struct {
 	tc table.TableServiceClient
@@ -29,7 +28,7 @@ func NewTableService(conn *grpc.ClientConn) tableService {
 func (ts tableService) Delete(ctx context.Context, eID uint64, qua uint32) (uint32, error) {
 	r, err := ts.tc.RemoveFromEstablishment(ctx, &table.RequestDelete{EstablishmenId: eID, Quantity: qua})
 	if err != nil {
-		return 0, pkg.NewAppError("failed to remove tables", nil, http.StatusInternalServerError)
+		return 0, pkg.NewAppError("failed to remove tables", err, http.StatusInternalServerError)
 	}
 	return r.Deleted, nil
 }

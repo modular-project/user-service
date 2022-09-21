@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"users-service/model"
 	"users-service/pkg"
@@ -16,11 +17,11 @@ var (
 	ErrTokenIsNotAJWT      = errors.New("token is not a jwt")
 )
 
-func createRefreshCookie(c echo.Context, refreshToken string) {
+func createRefreshCookie(c echo.Context, refreshToken, path string) {
 	cookie := new(http.Cookie)
 	cookie.Name = "refresh"
 	cookie.HttpOnly = true
-	cookie.Path = "/api/v1/user/refresh/"
+	cookie.Path = path
 	cookie.MaxAge = 0
 	cookie.Value = refreshToken
 	c.SetCookie(cookie)
@@ -44,6 +45,15 @@ func getUserRoleFromContext(c echo.Context) (model.UserRole, error) {
 		return model.UserRole{}, pkg.NewAppError("user don't have a role", nil, http.StatusUnauthorized)
 	}
 	return ur, nil
+}
+
+func getKitchenEstablishmentFromContext(c echo.Context) (uint, error) {
+	log.Println(c.Get("eID"))
+	eID, ok := c.Get("eID").(uint)
+	if !ok {
+		return 0, pkg.NewAppError("user don't have a role", nil, http.StatusUnauthorized)
+	}
+	return eID, nil
 }
 
 func getUserIDFromContext(c echo.Context) (uint, error) {

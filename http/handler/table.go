@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"users-service/pkg"
@@ -73,6 +74,7 @@ func (tu TableUC) Delete(c echo.Context) error {
 	if err != nil {
 		q = 1
 	}
+	log.Print(eID, q)
 	del, err := tu.ts.Delete(c.Request().Context(), eID, uint32(q))
 	if err != nil {
 		return fmt.Errorf("fail at delete: %w", err)
@@ -92,7 +94,7 @@ func (tu TableUC) DeleteIn(c echo.Context) error {
 	}
 	del, err := tu.ts.Delete(c.Request().Context(), uint64(ur.EstablishmentID), uint32(q))
 	if err != nil {
-		return fmt.Errorf("fail at delete: %w", err)
+		return fmt.Errorf("fail at delete in: %w", err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"deleted": del})

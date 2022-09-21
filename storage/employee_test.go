@@ -115,8 +115,8 @@ func TestSearchEmployee(t *testing.T) {
 							Sort: model.DES,
 						},
 					},
+					Rols: []uint{1, 4, 3},
 				},
-				Rols: []uint{1, 4, 3},
 			},
 			wantEmployees: []model.User{
 				{

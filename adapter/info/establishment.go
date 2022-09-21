@@ -2,6 +2,7 @@ package info
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"users-service/pkg"
 
@@ -15,6 +16,14 @@ type establishmentService struct {
 
 func NewESTBService(conn *grpc.ClientConn) establishmentService {
 	return establishmentService{esc: est.NewEstablishmentServiceClient(conn)}
+}
+
+func (e establishmentService) GetByAddress(ctx context.Context, aID string) (uint64, uint32, error) {
+	r, err := e.esc.GetByAddress(ctx, &est.RequestGetByAddress{Id: aID})
+	if err != nil {
+		return 0, 0, fmt.Errorf("esc.GetByAddress: %w", err)
+	}
+	return r.Id, r.Quantity, nil
 }
 
 func (e establishmentService) Create(ctx context.Context, data *est.Establishment, qua uint32) (uint64, error) {
