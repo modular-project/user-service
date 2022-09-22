@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"users-service/model"
 	"users-service/pkg"
 
@@ -21,6 +22,10 @@ const (
 var (
 	_db *gorm.DB
 )
+
+type creater interface {
+	SignUp(l *model.LogIn) error
+}
 
 func getErrorFromResult(tx *gorm.DB) error {
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -79,25 +84,33 @@ func setRoles() error {
 	return getErrorFromResult(res)
 }
 
-func setOwner() error {
+func setOwner(c creater) error {
+
 	u := model.User{}
-	res := _db.Where("email = ?", "owner@mail.com").First(&u)
-	err := getErrorFromResult(res)
-	if err != nil {
-		return err
+	res := _db.Where("id = 1").First(&u)
+	log.Println(res.Error != nil && res.Error != gorm.ErrRecordNotFound)
+	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+		return res.Error
 	}
-	if u.IsVerified {
+	if res.RowsAffected == 1 {
 		return nil
 	}
-	res = _db.Model(&model.User{}).Where("email = ?", "owner@mail.com").Update("is_verified", true)
-	err = getErrorFromResult(res)
+	email, ok := os.LookupEnv("USER_OWNER_MAIL")
+	if !ok {
+		return fmt.Errorf("owner email not found")
+	}
+	pwd, ok := os.LookupEnv("USER_OWNER_PWD")
+	if !ok {
+		return fmt.Errorf("owner email not found")
+	}
+	err := c.SignUp(&model.LogIn{User: email, Password: pwd})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create owner: %w", err)
 	}
 	res = _db.Create(&model.UserRole{
-		UserID:   u.ID,
+		UserID:   1,
 		RoleID:   model.OWNER,
-		Salary:   100,
+		Salary:   0,
 		IsActive: true,
 	})
 	log.Println("owner is set")
@@ -108,7 +121,7 @@ func Drop(tables ...interface{}) error {
 	return _db.Migrator().DropTable(tables...)
 }
 
-func Migrate(tables ...interface{}) error {
+func Migrate(c creater, tables ...interface{}) error {
 	err := _db.SetupJoinTable(&model.User{}, "Roles", &model.UserRole{})
 	if err != nil {
 		return fmt.Errorf("fail at setup join table :%w", err)
@@ -121,7 +134,7 @@ func Migrate(tables ...interface{}) error {
 	if err != nil {
 		return err
 	}
-	return setOwner()
+	return setOwner(c)
 }
 
 // func DB() *gorm.DB {

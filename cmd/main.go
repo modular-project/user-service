@@ -124,8 +124,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("NewGormDB(%+v): %s", storage.DBConnection{}, err)
 	}
+	to := authorization.NewToken()
+	rs := storage.NewRefreshStore()
+	ss := controller.NewSignService(rs, controller.NewUserValidate(), storage.NewUserSignStore(), to)
 	// Migrate tables to DB
-	storage.Migrate(
+	err = storage.Migrate(
+		ss,
 		&model.User{},
 		&model.Role{},
 		&model.UserRole{},
@@ -137,10 +141,8 @@ func main() {
 		log.Fatalf("no se logro realizar la migracion de las tablas: %v", err)
 	}
 	// Create Dependencies
-	to := authorization.NewToken()
-	rs := storage.NewRefreshStore()
+
 	us := controller.NewUserService(storage.NewUserStore(), storage.NewVerifyStore(), email.NewMail())
-	ss := controller.NewSignService(rs, controller.NewUserValidate(), storage.NewUserSignStore(), to)
 	kss := controller.NewSignService(rs, controller.NewKitchenValidate(), storage.NewKitchenSignStore(), to)
 	job := storage.NewPermissionStore()
 	per := controller.NewPermission(job)

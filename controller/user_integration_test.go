@@ -37,7 +37,7 @@ func TestSingUpIntegration(t *testing.T) {
 	}
 	uc := controller.NewSignService(storage.NewRefreshStore(), controller.NewUserValidate(), storage.NewUserSignStore(), nil)
 	models := []interface{}{model.User{}, model.Role{}, model.UserRole{}}
-	err = storage.Migrate(models...)
+	err = storage.Migrate(nil, models...)
 	if err != nil {
 		t.Fatalf("Failed to Create tables: %s", err)
 	}
@@ -89,7 +89,7 @@ func TestSingInIntegration(t *testing.T) {
 	authorization.LoadCertificates(authorization.RSA512)
 	uc := controller.NewSignService(storage.NewRefreshStore(), controller.NewUserValidate(), storage.NewUserSignStore(), authorization.NewToken())
 	models := []interface{}{model.User{}, model.Role{}, model.UserRole{}, model.Refresh{}}
-	err = storage.Migrate(models...)
+	err = storage.Migrate(nil, models...)
 	if err != nil {
 		t.Fatalf("Failed to Create tables: %s", err)
 	}

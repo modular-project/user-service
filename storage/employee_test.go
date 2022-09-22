@@ -91,7 +91,7 @@ func TestSearchEmployee(t *testing.T) {
 		}
 	})
 
-	err = Migrate(models...)
+	err = Migrate(nil, models...)
 	if err != nil {
 		t.Fatalf("Failed to Create tables: %s", err)
 	}
