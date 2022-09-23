@@ -19,6 +19,8 @@ data:
   host: ${USER_DB_HOST}
   mail_user: ${MAIL_USER}
   mail_pwd: ${MAIL_PWD}
+  rsa: ${RSA_PRI_KEY}
+  rsa_pub: ${RSA_PUB_KEY}
 
 ---
 apiVersion: apps/v1
@@ -68,6 +70,16 @@ spec:
             configMapKeyRef:
               name: user-configmap
               key: db_port
+        - name: RGE_RSA
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: rsa
+        - name: RGE_RSA_PUB
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: rsa_pub
         - name: USER_HOST
           value: localhost
         - name: USER_PORT
