@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-configmap
+data:
+  db_port: 80
+  user-service: user-svc
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: user-secret
+type: Opaque
+data:
+  pwd: ${USER_DB_PWD}
+  user: ${USER_DB_USER}
+  name: ${USER_DB_NAME}
+  host: ${USER_DB_HOST}
+  mail_user: ${MAIL_USER}
+  mail_pwd: ${MAIL_PWD}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-deployment
+  labels:
+    app: user-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-app
+  template:
+    metadata:
+      labels:
+        app: user-app
+    spec:
+      containers:
+      - name: user-app
+        image: nicolas2029/menu-admin:alpine
+        ports:
+        - containerPort: ${USER_PORT}
+        env:
+        - name: USER_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: name
+        - name: USER_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: user
+        - name: USER_DB_PWD
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: pwd
+        - name: USER_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: host
+        - name: USER_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: user-configmap
+              key: db_port
+        - name: USER_HOST
+          value: localhost
+        - name: USER_PORT
+          value: ${USER_PORT}
+        - name: USER_OWNER_MAIL
+          value: ${OWNER_MAIL}
+        - name: USER_OWNER_PWD
+          value: ${OWNER_PWD}
+        - name: INFO_HOST #TODO: UPDATE
+          value: localhost
+        - name: ORDER_HOST
+          value: localhost
+        - name: ADD_HOST
+          value: localhost
+        - name: IA_HOST
+          value: localhost
+        - name: MAIL_HOST
+          value: smtp.mailtrap.io
+        - name: MAIL_PORT
+          value: 465
+        - name: MAIL_NAME
+          value: PuntoYComa@mail.com
+        - name: MAIL_USER
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: mail_user
+        - name: MAIL_PWD
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: mail_pwd
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-app
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-svc
+spec:
+  selector:
+    app: user-app
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: ${USER_PORT}
+      targetPort: ${USER_PORT}
