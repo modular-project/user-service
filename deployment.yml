@@ -88,8 +88,18 @@ spec:
           value: ${OWNER_MAIL}
         - name: USER_OWNER_PWD
           value: ${OWNER_PWD}
+        - name: APP_NAME
+          value: ${APP_NAME}
         - name: INFO_HOST #TODO: UPDATE
           value: localhost
+        - name: INFO_PORT
+          value: 3004
+        - name: ORDER_PORT
+          value: 3001
+        - name: ADD_PORT
+          value: 3002
+        - name: IA_PORT
+          value: 3003
         - name: ORDER_HOST
           value: localhost
         - name: ADD_HOST
