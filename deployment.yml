@@ -1,10 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-configmap
+  name: svc-configmap
 data:
-  db_port: '80'
-  user-service: user-svc
+  user-svc: user-svc
+  info-svc: info-svc
+  addr-svc: addr-svc
+  ia-svc: ia-svc
+  order-svc: order-svc
+  front-svc: front-svc
 
 ---
 apiVersion: apps/v1
@@ -28,6 +32,13 @@ spec:
         image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
         ports:
         - containerPort: 3001
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu:    "2"
+          limits:
+            memory: "3Gi"
+            cpu: "3"
         env:
         - name: USER_DB_NAME
           valueFrom:
@@ -50,10 +61,7 @@ spec:
               name: user-secret
               key: host
         - name: USER_DB_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: user-configmap
-              key: db_port
+          value: localhost
         - name: RGE_RSA
           valueFrom:
             secretKeyRef:
@@ -112,6 +120,29 @@ spec:
             secretKeyRef:
               name: user-secret
               key: mail_pwd
+      - name: user-cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.0.0.preview.0  # make sure the use the latest version
+        args:
+          # If connecting from a VPC-native GKE cluster, you can use the
+          # following flag to have the proxy connect over private IP
+          # - "--private-ip"
+          # Enable structured logging with LogEntry format:
+          - "--structured-logs"
+          - "--port=5432"
+          - "modular-pc"
+        
+        securityContext:
+          # The default Cloud SQL proxy image runs as the
+          # "nonroot" user and group (uid: 65532) by default.
+          runAsNonRoot: false
+        resources:
+          requests:
+            memory: "1.5Gi"
+            cpu:    "1"
+          limits:
+            memory: "3Gi"
+            cpu: "2" 
+
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
@@ -134,7 +165,6 @@ metadata:
 spec:
   selector:
     app: user-app
-  type: LoadBalancer
   ports:
     - protocol: TCP
       port: 3001
