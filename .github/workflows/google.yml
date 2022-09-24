@@ -40,15 +40,31 @@ jobs:
       uses: actions/checkout@v3
 
     # Configure Workload Identity Federation and generate an access token.
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
+    # - id: 'auth'
+    #   name: 'Authenticate to Google Cloud'
+    #   uses: 'google-github-actions/auth@v0'
+    #   with:
+    #     token_format: 'access_token'
+    #     workload_identity_provider: 'projects/332412992214/locations/global/workloadIdentityPools/new-modular-pool/providers/new-modular-provider'
+    #     service_account: 'new-modular-git@woven-fountain-359423.iam.gserviceaccount.com'
+    # Alternative option - authentication via credentials json
+    # - id: 'auth'
+    #   uses: 'google-github-actions/auth@v0'
+    #   with:
+    #     credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+    # Setup gcloud CLI
+    - uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
       with:
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
+        service_account_key: ${{ secrets.GKE_SA_KEY }}
+        project_id: ${{ secrets.GKE_PROJECT }}
+    # Configure Docker to use the gcloud command-line tool as a credential
+    # helper for authentication
+    - run: |-
+        gcloud --quiet auth configure-docker
     - name: Docker configuration
       run: |-
-        echo ${{steps.auth.outputs.access_token}} | docker login -u oauth2accesstoken --password-stdin https://$GAR_LOCATION-docker.pkg.dev
         gcloud auth configure-docker $GAR_LOCATION-docker.pkg.dev
+    # echo ${{steps.auth.outputs.access_token}} | docker login -u oauth2accesstoken --password-stdin https://$GAR_LOCATION-docker.pkg.dev
     # Get the GKE credentials so we can deploy to the cluster
     - name: Set up GKE credentials
       uses: google-github-actions/get-gke-credentials@v0
