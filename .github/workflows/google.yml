@@ -19,8 +19,8 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GAR_LOCATION: northamerica-northeast1 # TODO: update region of the Artifact Registry
-  GKE_CLUSTER: modular-gke  # TODO: update to cluster name
-  GKE_ZONE: northamerica-northeast1-a # TODO: update to cluster zone
+  GKE_CLUSTER: modular-auto-gke  # TODO: update to cluster name
+  GKE_ZONE: northamerica-northeast1 # TODO: update to cluster zone
   DEPLOYMENT_NAME: user-deployment # TODO: update to deployment name
   REPOSITORY: user-img # TODO: update to Artifact Registry docker repository
   IMAGE: user-svc-img
@@ -66,13 +66,6 @@ jobs:
         gcloud auth configure-docker $GAR_LOCATION-docker.pkg.dev
     # echo ${{steps.auth.outputs.access_token}} | docker login -u oauth2accesstoken --password-stdin https://$GAR_LOCATION-docker.pkg.dev
     # Get the GKE credentials so we can deploy to the cluster
-    - name: Set up GKE credentials
-      uses: google-github-actions/get-gke-credentials@v0
-      with:
-        cluster_name: ${{ env.GKE_CLUSTER }}
-        location: ${{ env.GKE_ZONE }}
-
-    # Get the GKE credentials so we can deploy to the cluster
     - uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
       with:
         cluster_name: ${{ env.GKE_CLUSTER }}
@@ -103,11 +96,12 @@ jobs:
         --from-literal=name='${{secrets.DB_NAME}}' \
         --from-literal=host='${{secrets.DB_HOST}}' \
         --from-literal=mail_user='${{secrets.MAIL_USER}}' \
-        --from-literal=Mmail_pwd='${{secrets.MAIL_PWD}}' \
+        --from-literal=mail_pwd='${{secrets.MAIL_PWD}}' \
         --from-literal=rsa='${{secrets.RSA_PRI_KEY}}' \
         --from-literal=rsa_pub='${{secrets.RSA_PUB_KEY}}' \
         --from-literal=owner_mail='${{secrets.USER_OWNER_MAIL}}' \
-        --from-literal=owner_pwd='${{secrets.USER_OWNER_PWD}}' 
+        --from-literal=owner_pwd='${{secrets.USER_OWNER_PWD}}' \
+        --dry-run=true -o yaml | kubectl apply -f -
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-

@@ -86,16 +86,16 @@ spec:
         - name: INFO_HOST #TODO: UPDATE
           value: localhost
         - name: INFO_PORT
-          value: '3004'
-        - name: ORDER_PORT
-          value: '3001'
-        - name: ADDR_PORT
           value: '3002'
-        - name: IA_PORT
+        - name: ORDER_PORT
           value: '3003'
+        - name: ADDR_PORT
+          value: '3004'
+        - name: IA_PORT
+          value: '3005'
         - name: ORDER_HOST
           value: localhost
-        - name: ADDR_HOST
+        - name: ADDRR_HOST
           value: localhost
         - name: IA_HOST
           value: localhost
