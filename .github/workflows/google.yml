@@ -96,7 +96,7 @@ jobs:
         --from-literal=name='${{secrets.DB_NAME}}' \
         --from-literal=host='${{secrets.DB_HOST}}' \
         --from-literal=mail_user='${{secrets.MAIL_USER}}' \
-        --from-literal=Mmail_pwd='${{secrets.MAIL_PWD}}' \
+        --from-literal=mail_pwd='${{secrets.MAIL_PWD}}' \
         --from-literal=rsa='${{secrets.RSA_PRI_KEY}}' \
         --from-literal=rsa_pub='${{secrets.RSA_PUB_KEY}}' \
         --from-literal=owner_mail='${{secrets.USER_OWNER_MAIL}}' \
