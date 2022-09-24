@@ -86,13 +86,13 @@ spec:
           value: '3004'
         - name: ORDER_PORT
           value: '3001'
-        - name: ADD_PORT
+        - name: ADDR_PORT
           value: '3002'
         - name: IA_PORT
           value: '3003'
         - name: ORDER_HOST
           value: localhost
-        - name: ADD_HOST
+        - name: ADDR_HOST
           value: localhost
         - name: IA_HOST
           value: localhost
