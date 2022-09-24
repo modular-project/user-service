@@ -78,16 +78,16 @@ jobs:
     - name: Create Secrets
       run: |-
         kubectl create secret generic user-secret \
-        --from-literal=pwd='${{secret.DB_PWD}}' \
-        --from-literal=user='${{secret.DB_USER}}' \
-        --from-literal=name='${{secret.DB_NAME}}' \
-        --from-literal=host='${{secret.DB_HOST}}' \
-        --from-literal=mail_user='${{secret.MAIL_USER}}' \
-        --from-literal=Mmail_pwd='${{secret.MAIL_PWD}}' \
-        --from-literal=rsa='${{secret.RSA_PRI_KEY}}' \
-        --from-literal=rsa_pub='${{secret.RSA_PUB_KEY}}' \
-        --from-literal=owner_mail='${{secret.USER_OWNER_MAIL}}' \
-        --from-literal=owner_pwd='${{secret.USER_OWNER_PWD}}' 
+        --from-literal=pwd='${{secrets.DB_PWD}}' \
+        --from-literal=user='${{secrets.DB_USER}}' \
+        --from-literal=name='${{secrets.DB_NAME}}' \
+        --from-literal=host='${{secrets.DB_HOST}}' \
+        --from-literal=mail_user='${{secrets.MAIL_USER}}' \
+        --from-literal=Mmail_pwd='${{secrets.MAIL_PWD}}' \
+        --from-literal=rsa='${{secrets.RSA_PRI_KEY}}' \
+        --from-literal=rsa_pub='${{secrets.RSA_PUB_KEY}}' \
+        --from-literal=owner_mail='${{secrets.USER_OWNER_MAIL}}' \
+        --from-literal=owner_pwd='${{secrets.USER_OWNER_PWD}}' 
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
