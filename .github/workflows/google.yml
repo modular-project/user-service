@@ -90,7 +90,7 @@ jobs:
         chmod u+x ./kustomize
     - name: Create Secrets
       run: |-
-        kubectl apply secret generic user-secret \
+        kubectl create secret generic user-secret \
         --from-literal=pwd='${{secrets.DB_PWD}}' \
         --from-literal=user='${{secrets.DB_USER}}' \
         --from-literal=name='${{secrets.DB_NAME}}' \
@@ -100,7 +100,8 @@ jobs:
         --from-literal=rsa='${{secrets.RSA_PRI_KEY}}' \
         --from-literal=rsa_pub='${{secrets.RSA_PUB_KEY}}' \
         --from-literal=owner_mail='${{secrets.USER_OWNER_MAIL}}' \
-        --from-literal=owner_pwd='${{secrets.USER_OWNER_PWD}}' 
+        --from-literal=owner_pwd='${{secrets.USER_OWNER_PWD}}' \
+        --dry-run=true -o yaml | kubectl apply -f -
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
