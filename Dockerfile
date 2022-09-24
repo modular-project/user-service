@@ -1,4 +1,4 @@
-FROM golang:1.16
+FROM golang:1.16-alpine
 RUN mkdir /app
 ADD . /app
 WORKDIR /app
@@ -11,4 +11,4 @@ WORKDIR /root/
 
 COPY --from=0 /app/main ./cmd/
 
-CMD ["./cmd/main"]  
+CMD ["./cmd/main"]
