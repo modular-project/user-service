@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: user-configmap
 data:
-  db_port: 80
+  db_port: '80'
   user-service: user-svc
 
 ---
@@ -83,13 +83,13 @@ spec:
         - name: INFO_HOST #TODO: UPDATE
           value: localhost
         - name: INFO_PORT
-          value: 3004
+          value: '3004'
         - name: ORDER_PORT
-          value: 3001
+          value: '3001'
         - name: ADD_PORT
-          value: 3002
+          value: '3002'
         - name: IA_PORT
-          value: 3003
+          value: '3003'
         - name: ORDER_HOST
           value: localhost
         - name: ADD_HOST
@@ -99,7 +99,7 @@ spec:
         - name: MAIL_HOST
           value: smtp.mailtrap.io
         - name: MAIL_PORT
-          value: 465
+          value: '465'
         - name: MAIL_NAME
           value: PuntoYComa@mail.com
         - name: MAIL_USER
