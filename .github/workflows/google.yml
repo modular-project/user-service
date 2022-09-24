@@ -45,8 +45,8 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         token_format: 'access_token'
-        workload_identity_provider: 'projects/332412992214/locations/global/workloadIdentityPools/modular-pool1/providers/modular-provider1'
-        service_account: 'deployment-modular@woven-fountain-359423.iam.gserviceaccount.com'
+        workload_identity_provider: 'projects/332412992214/locations/global/workloadIdentityPools/new-modular-pool/providers/new-modular-provider'
+        service_account: 'new-modular-git@woven-fountain-359423.iam.gserviceaccount.com'
 
     - name: Docker configuration
       run: |-
@@ -58,7 +58,6 @@ jobs:
       with:
         cluster_name: ${{ env.GKE_CLUSTER }}
         location: ${{ env.GKE_ZONE }}
-
     # Build the Docker image
     - name: Build
       run: |-
