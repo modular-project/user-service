@@ -90,7 +90,7 @@ jobs:
         chmod u+x ./kustomize
     - name: Create Secrets
       run: |-
-        kubectl create secret generic user-secret \
+        kubectl apply secret generic user-secret \
         --from-literal=pwd='${{secrets.DB_PWD}}' \
         --from-literal=user='${{secrets.DB_USER}}' \
         --from-literal=name='${{secrets.DB_NAME}}' \
