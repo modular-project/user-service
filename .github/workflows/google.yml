@@ -45,7 +45,7 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         token_format: 'access_token'
-        workload_identity_provider: 'projects/332412992214/locations/global/workloadIdentityPools/new-modular-pool/providers/new-modular-provider'
+        workload_identity_provider: 'projects/332412992214/locations/global/workloadIdentityPools/new-modular-pool'
         service_account: 'new-modular-git@woven-fountain-359423.iam.gserviceaccount.com'
 
     - name: Docker configuration
