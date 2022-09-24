@@ -7,22 +7,6 @@ data:
   user-service: user-svc
 
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: user-secret
-type: Opaque
-data:
-  pwd: ${USER_DB_PWD}
-  user: ${USER_DB_USER}
-  name: ${USER_DB_NAME}
-  host: ${USER_DB_HOST}
-  mail_user: ${MAIL_USER}
-  mail_pwd: ${MAIL_PWD}
-  rsa: ${RSA_PRI_KEY}
-  rsa_pub: ${RSA_PUB_KEY}
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -41,9 +25,9 @@ spec:
     spec:
       containers:
       - name: user-app
-        image: nicolas2029/menu-admin:alpine
+        image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
         ports:
-        - containerPort: ${USER_PORT}
+        - containerPort: 3001
         env:
         - name: USER_DB_NAME
           valueFrom:
@@ -83,13 +67,19 @@ spec:
         - name: USER_HOST
           value: localhost
         - name: USER_PORT
-          value: ${USER_PORT}
+          value: 3001
         - name: USER_OWNER_MAIL
-          value: ${OWNER_MAIL}
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: owner_mail
         - name: USER_OWNER_PWD
-          value: ${OWNER_PWD}
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: owner_pwd
         - name: APP_NAME
-          value: ${APP_NAME}
+          value: Punto y Coma
         - name: INFO_HOST #TODO: UPDATE
           value: localhost
         - name: INFO_PORT
@@ -147,5 +137,5 @@ spec:
   type: LoadBalancer
   ports:
     - protocol: TCP
-      port: ${USER_PORT}
-      targetPort: ${USER_PORT}
+      port: 3001
+      targetPort: 3001
