@@ -108,16 +108,26 @@ spec:
             secretKeyRef:
               name: user-secret
               key: mail_pwd
+        - name: DRIVE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: drive_secret
+        - name: DRIVE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: drive_token
       - name: user-cloud-sql-proxy
         image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.0.0.preview.0  # make sure the use the latest version
         args:
           # If connecting from a VPC-native GKE cluster, you can use the
           # following flag to have the proxy connect over private IP
-          # - "--private-ip"
+          - "--private-ip"
           # Enable structured logging with LogEntry format:
           - "--structured-logs"
           - "--port=5432"
-          - "modular-pc"
+          - "woven-fountain-359423:northamerica-northeast1:modular-pc"
         
         securityContext:
           # The default Cloud SQL proxy image runs as the

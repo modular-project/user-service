@@ -101,6 +101,8 @@ jobs:
         --from-literal=rsa_pub='${{secrets.RSA_PUB_KEY}}' \
         --from-literal=owner_mail='${{secrets.USER_OWNER_MAIL}}' \
         --from-literal=owner_pwd='${{secrets.USER_OWNER_PWD}}' \
+        --from-literal=drive_secret='${{secrets.DRIVE_SECRET}}' \
+        --from-literal=drive_token='${{secrets.DRIVE_TOKEN}}' \
         --dry-run=true -o yaml | kubectl apply -f -
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
