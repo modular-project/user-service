@@ -15,8 +15,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-deployment
-  labels:
-    app: user-app
 spec:
   replicas: 1
   selector:
@@ -32,11 +30,6 @@ spec:
         image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
         ports:
         - containerPort: 3001
-        resources:
-          requests:
-            cpu:    "100m"
-          limits:
-            cpu: "200m" 
         env:
         - name: USER_DB_NAME
           valueFrom:
@@ -95,7 +88,7 @@ spec:
           value: '3005'
         - name: ORDER_HOST
           value: localhost
-        - name: ADDRR_HOST
+        - name: ADDR_HOST
           value: localhost
         - name: IA_HOST
           value: localhost
@@ -130,11 +123,6 @@ spec:
           # The default Cloud SQL proxy image runs as the
           # "nonroot" user and group (uid: 65532) by default.
           runAsNonRoot: false
-        resources:
-          requests:
-            cpu:    "100m"
-          limits:
-            cpu: "200m" 
 
 ---
 apiVersion: autoscaling/v1
