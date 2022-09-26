@@ -62,12 +62,8 @@ func newDBConnection() storage.DBConnection {
 
 func main() {
 	// Load Credentials
-	env := "USER_HOST"
-	host, f := os.LookupEnv(env)
-	if !f {
-		log.Fatalf("environment variable (%s) not found", env)
-	}
-	env = "USER_PORT"
+
+	env := "USER_PORT"
 	port, f := os.LookupEnv(env)
 	if !f {
 		log.Fatalf("environment variable (%s) not found", env)
@@ -201,7 +197,7 @@ func main() {
 	}))
 	e.Use(middleware.Logger())
 	r.Start(e)
-	err = e.Start(fmt.Sprintf("%s:%s", host, port))
+	err = e.Start(fmt.Sprintf(":%s", port))
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
