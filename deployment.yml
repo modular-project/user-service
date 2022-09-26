@@ -189,8 +189,20 @@ metadata:
   annotations:
     kubernetes.io/ingress.global-static-ip-name: "user-static-ip"
 spec:
-  defaultBackend:
-    service:
-      name: user-svc
-      port:
-        number: 8080
+  rules:
+  - http:
+      paths:
+      - path: /api/v1/*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: user-svc
+            port:
+              number: 8080
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: front-svc
+            port:
+              number: 80
