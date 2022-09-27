@@ -11,5 +11,6 @@ WORKDIR /root/
 
 COPY --from=0 /app/main ./cmd/
 COPY --from=0 /app/bootstrap.json /
+COPY --from=0 /app/web/. /web/
 
 CMD ["./cmd/main"]
