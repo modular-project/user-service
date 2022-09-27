@@ -89,7 +89,7 @@ spec:
         - name: APP_NAME
           value: Punto y Coma
         - name: INFO_HOST #TODO: UPDATE
-          value: xds:///grpc-gke-info-svc
+          value: info-svc
         - name: INFO_PORT
           value: '3002'
         - name: ORDER_PORT
@@ -99,11 +99,11 @@ spec:
         - name: IA_PORT
           value: '3005'
         - name: ORDER_HOST
-          value: xds:///order-svc
+          value: order-svc
         - name: ADDR_HOST
-          value: xds:///addr-svc
+          value: addr-svc
         - name: IA_HOST
-          value: xds:///ia-svc
+          value: ia-svc
         - name: MAIL_HOST
           value: smtp.gmail.com
         - name: MAIL_PORT
