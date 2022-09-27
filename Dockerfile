@@ -10,5 +10,6 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 COPY --from=0 /app/main ./cmd/
+COPY --from=0 /app/bootstrap.json /
 
 CMD ["./cmd/main"]

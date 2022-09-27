@@ -22,6 +22,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	_ "google.golang.org/grpc/xds"
 )
 
 func newDBConnection() storage.DBConnection {

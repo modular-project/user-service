@@ -24,13 +24,37 @@ type service struct {
 	ds *drive.Service
 }
 
+func newDevService() service {
+	ctx := context.Background()
+	b, err := os.ReadFile("cmd/client_secret.json")
+	if err != nil {
+		log.Fatalf("Unable to read client secret file: %v", err)
+	}
+	config, err := google.ConfigFromJSON(b, drive.DriveFileScope)
+	if err != nil {
+		log.Fatalf("Unable to parse client secret file to config: %v", err)
+	}
+	clt := getClient(config)
+
+	srv, err := drive.NewService(ctx, option.WithHTTPClient(clt))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Drive client: %v", err)
+	}
+	return service{ds: srv}
+}
+
 func NewService() service {
+	_, ok := os.LookupEnv("IS_DEV")
+	if ok {
+		return newDevService()
+	}
 	ctx := context.Background()
 	b, ok := os.LookupEnv("DRIVE_SECRET")
 	if !ok {
 		log.Fatalf("Unable get client secret to config: DRIVE_SECRET not found")
 	}
 	config, err := google.ConfigFromJSON([]byte(b), drive.DriveFileScope)
+
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
@@ -58,6 +82,10 @@ func (s service) SaveImg(h *multipart.FileHeader, name, p string) (string, error
 // Retrieve a token, saves the token, then returns the generated client.
 func getClient(config *oauth2.Config) *http.Client {
 	tokFile := "./cmd/token.json"
+	_, ok := os.LookupEnv("IS_DEV")
+	if !ok {
+		tokFile = ""
+	}
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
 		tok = getTokenFromWeb(config)
@@ -86,6 +114,16 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 
 // Retrieves a token from a local file.
 func tokenFromFile(file string) (*oauth2.Token, error) {
+	if file != "" {
+		f, err := os.Open(file)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		tok := &oauth2.Token{}
+		err = json.NewDecoder(f).Decode(tok)
+		return tok, err
+	}
 	f, ok := os.LookupEnv("DRIVE_TOKEN")
 	if !ok {
 		return nil, fmt.Errorf("DRIVE_TOKEN not found")
