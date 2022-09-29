@@ -1,7 +1,6 @@
 package route
 
 import (
-	"net/http"
 	"users-service/http/handler"
 	"users-service/http/middleware"
 	"users-service/model"
@@ -153,8 +152,6 @@ func (r route) classifier(e *echo.Echo) {
 
 func (r route) Start(e *echo.Echo) {
 	e.HTTPErrorHandler = r.mid.Errors
-	e.GET("/", func(c echo.Context) error { return c.String(http.StatusOK, "Hello World") })
-	e.GET("/api/v1/", func(c echo.Context) error { return c.String(http.StatusOK, "Hello Api v1") })
 	r.user(e)
 	r.employee(e)
 	r.product(e)

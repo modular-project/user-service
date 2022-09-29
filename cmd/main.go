@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"users-service/adapter/classifier"
 	"users-service/adapter/email"
@@ -160,7 +161,7 @@ func main() {
 	}
 	cConn, err := grpc.Dial(fmt.Sprintf("%s:%s", cHost, cPort), do)
 	if err != nil {
-		log.Fatalf("fatal at start grpc connection to Address Server in %s:%s, %v", aHost, aPort, err)
+		log.Fatalf("fatal at start grpc connection to Address Server in %s:%s, %v", cHost, cPort, err)
 	}
 	// Create Adapter dependencies
 	ps := info.NewProductService(conn)
@@ -195,6 +196,9 @@ func main() {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowCredentials: true,
 	}))
+	// Health Check without logs
+	e.GET("/", func(c echo.Context) error { return c.String(http.StatusOK, "Hello World") })
+	e.GET("/api/v1/", func(c echo.Context) error { return c.String(http.StatusOK, "Hello Api v1") })
 	e.Use(middleware.Logger())
 	r.Start(e)
 	err = e.Start(fmt.Sprintf(":%s", port))

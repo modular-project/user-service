@@ -93,9 +93,9 @@ spec:
         - name: INFO_PORT
           value: '3002'
         - name: ORDER_PORT
-          value: '3003'
-        - name: ADDR_PORT
           value: '3004'
+        - name: ADDR_PORT
+          value: '3003'
         - name: IA_PORT
           value: '3005'
         - name: ORDER_HOST
