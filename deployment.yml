@@ -30,13 +30,13 @@ spec:
         image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
         resources:
           requests:
-            memory: "1Gi"
+            memory: "128Mi"
+            cpu: "50m"
+            ephemeral-storage: "64Mi"
+          limits:
+            memory: "256Mi"
             cpu: "250m"
             ephemeral-storage: "128Mi"
-          limits:
-            memory: "2Gi"
-            cpu: "500m"
-            ephemeral-storage: "256Mi"
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -134,13 +134,13 @@ spec:
         image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.0.0.preview.0  # make sure the use the latest version
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "250m"
+            memory: "64Mi"
+            cpu: "50m"
             ephemeral-storage: "64Mi"
           limits:
-            memory: "1Gi"
+            memory: "256Mi"
             cpu: "250m"
-            ephemeral-storage: "128Mi"
+            ephemeral-storage: "64Mi"
         args:
           # If connecting from a VPC-native GKE cluster, you can use the
           # following flag to have the proxy connect over private IP
@@ -148,7 +148,7 @@ spec:
           # Enable structured logging with LogEntry format:
           - "--structured-logs"
           - "--port=5432"
-          - "woven-fountain-359423:northamerica-northeast1:modular-pc"
+          - "woven-fountain-359423:northamerica-northeast1:modular-db-instance"
         
         securityContext:
           # The default Cloud SQL proxy image runs as the
