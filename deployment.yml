@@ -30,13 +30,13 @@ spec:
         image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "50m"
+            memory: "64Mi"
+            cpu: "10m"
             ephemeral-storage: "64Mi"
           limits:
-            memory: "256Mi"
-            cpu: "250m"
-            ephemeral-storage: "128Mi"
+            memory: "64Mi"
+            cpu: "10m"
+            ephemeral-storage: "64Mi"
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -135,11 +135,11 @@ spec:
         resources:
           requests:
             memory: "64Mi"
-            cpu: "50m"
+            cpu: "10m"
             ephemeral-storage: "64Mi"
           limits:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "64Mi"
+            cpu: "10m"
             ephemeral-storage: "64Mi"
         args:
           # If connecting from a VPC-native GKE cluster, you can use the
