@@ -23,6 +23,15 @@ func NewOrderService(conn *grpc.ClientConn, v validater) orderService {
 	return orderService{clt: pf.NewOrderServiceClient(conn), v: v}
 }
 
+// Return true if an establishment have pending orders
+func (os orderService) HavePendingOrders(ctx context.Context, eID uint64) (bool, error) {
+	r, err := os.clt.GetOrdersByEstablishment(ctx, &pf.OrdersRequest{Search: &pf.SearchOrders{Default: &pf.Default{Limit: 1}, Establishments: []uint64{eID}, Status: []pf.Status{2}}})
+	if err != nil {
+		return false, fmt.Errorf("clt.GetOrdersByEstablishment: %w", err)
+	}
+	return r.Orders != nil, nil
+}
+
 func (os orderService) CreateLocalOrder(ctx context.Context, in *pf.Order) (*pf.CreateResponse, float32, error) {
 	t, err := os.v.ValidateOrder(ctx, &val.ValidateOrderRequest{Order: in})
 	if err != nil {

@@ -16,6 +16,7 @@ type OrderStatusServicer interface {
 	CompleteProduct(ctx context.Context, in *pf.CompleteProductRequest) (*pf.CompleteProductResponse, error)
 	CapturePayment(ctx context.Context, in *pf.CapturePaymentRequest) (*pf.CapturePaymentResponse, error)
 	DeliverProduct(context.Context, *pf.DeliverProductRequest) (*pf.DeliverProductResponse, error)
+	CancelOrders(context.Context, uint64, []uint64) error
 }
 
 type OrderStatusUC struct {
@@ -24,6 +25,17 @@ type OrderStatusUC struct {
 
 func NewOrderStatusUC(oss OrderStatusServicer) OrderStatusUC {
 	return OrderStatusUC{oss: oss}
+}
+
+func (suc OrderStatusUC) CancelOrders(c echo.Context) error {
+	uID, err := getUserIDFromContext(c)
+	if err != nil {
+		return err
+	}
+	if err := suc.oss.CancelOrders(c.Request().Context(), uint64(uID), nil); err != nil {
+		return err
+	}
+	return c.NoContent(http.StatusOK)
 }
 
 func (suc OrderStatusUC) PayLocal(c echo.Context) error {

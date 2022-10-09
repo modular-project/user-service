@@ -181,6 +181,14 @@ func (es employeeService) Search(s *model.SearchEMPL) ([]model.User, error) {
 	return us, nil
 }
 
+func (es employeeService) HaveActiveEMPLs(eID uint) (bool, error) {
+	us, err := es.est.Search(&model.SearchEMPL{Search: model.Search{Limit: 1, Status: model.ACTIVE}, Establishments: []uint{eID}})
+	if err != nil {
+		return false, pkg.NewAppError("no search results", err, http.StatusBadRequest)
+	}
+	return us != nil, nil
+}
+
 // Hire an user by Email and set rol, salary anestablishment, user is hired by a contractor
 func (es employeeService) Hire(f model.UserRole, email string, role *model.UserRole) error {
 	if err := es.canHire(&f, role, email); err != nil {

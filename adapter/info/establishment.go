@@ -58,10 +58,10 @@ func (e establishmentService) Update(ctx context.Context, data *est.Establishmen
 	return nil
 }
 
-func (e establishmentService) Delete(ctx context.Context, id uint64) error {
-	_, err := e.esc.Delete(ctx, &est.RequestById{Id: id})
+func (e establishmentService) Delete(ctx context.Context, id uint64) (string, error) {
+	r, err := e.esc.Delete(ctx, &est.RequestById{Id: id})
 	if err != nil {
-		return pkg.NewAppError("failed to delete establishment", err, http.StatusInternalServerError)
+		return "", pkg.NewAppError("failed to delete establishment", err, http.StatusInternalServerError)
 	}
-	return nil
+	return r.AddressId, nil
 }

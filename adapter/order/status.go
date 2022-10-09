@@ -3,6 +3,8 @@ package order
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"users-service/pkg"
 
 	pf "github.com/modular-project/protobuffers/order/order"
 	"google.golang.org/grpc"
@@ -24,6 +26,14 @@ type Addresser interface {
 
 func NewOrderStatusService(conn *grpc.ClientConn, n Nearester, a Addresser) orderStatusService {
 	return orderStatusService{clt: pf.NewOrderStatusServiceClient(conn), near: n, add: a}
+}
+
+func (oss orderStatusService) CancelOrders(c context.Context, uID uint64, ids []uint64) error {
+	_, err := oss.clt.CancelOrders(c, &pf.CancelOrdersRequest{Ids: ids, UserId: uID})
+	if err != nil {
+		pkg.NewAppError("Could not cancel orders", err, http.StatusBadRequest)
+	}
+	return nil
 }
 
 func (oss orderStatusService) PayLocal(ctx context.Context, in *pf.PayLocalRequest) (*pf.PayLocalResponse, error) {

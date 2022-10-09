@@ -32,11 +32,9 @@ spec:
           requests:
             memory: "64Mi"
             cpu: "10m"
-            ephemeral-storage: "64Mi"
           limits:
             memory: "64Mi"
             cpu: "10m"
-            ephemeral-storage: "64Mi"
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -135,12 +133,10 @@ spec:
         resources:
           requests:
             memory: "64Mi"
-            cpu: "20m"
-            ephemeral-storage: "64Mi"
+            cpu: "10m"
           limits:
             memory: "64Mi"
-            cpu: "20m"
-            ephemeral-storage: "64Mi"
+            cpu: "10m"
         args:
           # If connecting from a VPC-native GKE cluster, you can use the
           # following flag to have the proxy connect over private IP

@@ -17,7 +17,7 @@ type ESTDService interface {
 	GetByID(context.Context, uint64) (est.Establishment, error)
 	GetInBatch(context.Context, []uint64) ([]*est.Establishment, error)
 	Update(context.Context, *est.Establishment) error
-	Delete(context.Context, uint64) error
+	Delete(context.Context, uint64) (string, error) // Return ID address from deleted
 	GetByAddress(context.Context, string) (uint64, uint32, error)
 }
 
@@ -29,13 +29,23 @@ type AddressServicer interface {
 	Search(context.Context, *apf.SearchAddress) (*apf.ResponseAll, error)
 }
 
+type HavePendingOrderser interface {
+	HavePendingOrders(context.Context, uint64) (bool, error)
+}
+
+type HaveEMPLser interface {
+	HaveActiveEMPLs(uint) (bool, error)
+}
+
 type ESTDuc struct {
 	ess ESTDService
 	as  AddressServicer
+	ho  HavePendingOrderser
+	he  HaveEMPLser
 }
 
-func NewESTDuc(ess ESTDService, as AddressServicer) ESTDuc {
-	return ESTDuc{ess: ess, as: as}
+func NewESTDuc(ess ESTDService, as AddressServicer, ho HavePendingOrderser, he HaveEMPLser) ESTDuc {
+	return ESTDuc{ess: ess, as: as, ho: ho, he: he}
 }
 
 func (euc ESTDuc) Create(c echo.Context) error {
@@ -117,14 +127,25 @@ func (euc ESTDuc) Delete(c echo.Context) error {
 	if err != nil {
 		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
-	e, err := euc.ess.GetByID(c.Request().Context(), id)
+	have, err := euc.ho.HavePendingOrders(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
-	if err := euc.ess.Delete(c.Request().Context(), id); err != nil {
+	if have {
+		return pkg.NewAppError("Establishment have pending orders", nil, http.StatusBadRequest)
+	}
+	he, err := euc.he.HaveActiveEMPLs(uint(id))
+	if err != nil {
 		return err
 	}
-	if _, err := euc.as.DeleteEstablishment(c.Request().Context(), e.AddressId); err != nil {
+	if he {
+		return pkg.NewAppError("Establishment have employees", nil, http.StatusBadRequest)
+	}
+	aID, err := euc.ess.Delete(c.Request().Context(), id)
+	if err != nil {
+		return err
+	}
+	if _, err := euc.as.DeleteEstablishment(c.Request().Context(), aID); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusOK)

@@ -180,7 +180,7 @@ func main() {
 	eUC := handler.NewEMPLUC(es)
 	pUC := handler.NewProductUC(ps)
 	tUC := handler.NewTableUC(ts)
-	estUC := handler.NewESTDuc(ess, ads)
+	estUC := handler.NewESTDuc(ess, ads, os, es)
 	kUC := handler.NewKitchenUC(kss, ks)
 	oUC := handler.NewOrderUC(os)
 	osUC := handler.NewOrderStatusUC(oss)

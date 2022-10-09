@@ -51,6 +51,7 @@ func (r route) order(e *echo.Echo) {
 	g.POST("/delivery/pay/:id", r.osUC.CapturePayment, r.mid.Login)
 	g.POST("/:id", r.oUC.GetProductsByOrderID, r.mid.Login)
 	g.POST("/user/", r.oUC.GetOrdersByUser, r.mid.Login)
+	g.DELETE("/user/", r.osUC.CancelOrders, r.mid.Login)
 	g.GET("/kitchen/", r.oUC.GetOrdersByKitchen, r.mid.KitchenEstablishment)
 	g.POST("/establishment/", r.oUC.GetOrdersByEstablishment, r.mid.Equal(model.MANAGER, true))
 	g.GET("/waiter/", r.oUC.GetOrderByWaiter, r.mid.Equal(model.WAITER, true))
