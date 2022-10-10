@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"users-service/pkg"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -67,10 +68,14 @@ func NewService() service {
 }
 
 func (s service) SaveImg(h *multipart.FileHeader, name, p string) (string, error) {
+	if h.Size > 10000000 {
+		return "", pkg.NewAppError("file must be less than 10 MB", nil, http.StatusBadRequest)
+	}
 	img, err := h.Open()
 	if err != nil {
 		return "", fmt.Errorf("open file: %w", err)
 	}
+	defer img.Close()
 	f := drive.File{Parents: []string{p}, Name: name}
 	r, err := s.ds.Files.Create(&f).Media(img).IncludePermissionsForView("published").Do()
 	if err != nil {
