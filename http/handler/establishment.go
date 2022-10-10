@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -135,7 +136,7 @@ func (euc ESTDuc) Delete(c echo.Context) error {
 		return pkg.NewAppError("Establishment have pending orders", nil, http.StatusBadRequest)
 	}
 	he, err := euc.he.HaveActiveEMPLs(uint(id))
-	if err != nil {
+	if err != nil && !errors.Is(err, pkg.ErrNoRowsAffected) {
 		return err
 	}
 	if he {

@@ -30,6 +30,8 @@ func (ae AppError) Error() string {
 	return fmt.Sprintf("%v: %v", ae.MSG, ae.Err)
 }
 
+func (ae AppError) Unwrap() error { return ae.Err }
+
 func NewAppError(msg string, err error, code int) error {
 	return &AppError{MSG: msg, Err: err, Code: code}
 }
