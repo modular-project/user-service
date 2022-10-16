@@ -148,10 +148,17 @@ func (eu EMPLuc) Fire(c echo.Context) error {
 	if err != nil {
 		return pkg.NewAppError("Fail at get path param id", err, http.StatusBadRequest)
 	}
+	var r struct {
+		Reason string `json:"reason"`
+	}
+	if err := c.Bind(&r); err != nil {
+		return pkg.NewAppError("Fail at bind reason", err, http.StatusBadRequest)
+	}
 	ur, err := getUserRoleFromContext(c)
 	if err != nil {
 		return err
 	}
+	ur.Reason = r.Reason
 	if err = eu.es.Fire(ur, uint(t)); err != nil {
 		return err
 	}

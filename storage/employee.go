@@ -19,7 +19,7 @@ func NewEMPLStore() emplStore {
 func (es emplStore) Self(uID uint) (model.UserJobs, error) {
 	uj := model.UserJobs{}
 	res := es.db.Where("id = ?", uID).
-		Select("email", "id", "url", "name", "birth_date", "is_verified").First(&uj.User)
+		Select("email", "id", "url", "name", "birth_date", "is_verified", "nss", "rfc").First(&uj.User)
 	err := getErrorFromResult(res)
 	if err != nil {
 		return model.UserJobs{}, fmt.Errorf("find user by id: %w", err)
@@ -35,7 +35,7 @@ func (es emplStore) Self(uID uint) (model.UserJobs, error) {
 func (es emplStore) Get(from *model.UserRole, target uint) (model.UserJobs, error) {
 	uj := model.UserJobs{}
 	res := es.db.Where("id = ?", target).
-		Select("email", "id", "url", "name", "birth_date", "is_verified").First(&uj.User)
+		Select("email", "id", "url", "name", "birth_date", "is_verified", "nss", "rfc").First(&uj.User)
 	err := getErrorFromResult(res)
 	if err != nil {
 		return model.UserJobs{}, fmt.Errorf("find user by id: %w", err)
@@ -180,8 +180,8 @@ func (es emplStore) Hire(ur *model.UserRole) error {
 	return nil
 }
 
-func (es emplStore) Fire(uID uint) error {
-	res := es.db.Model(&model.UserRole{}).Where("user_id =? AND is_active = true", uID).Update("is_active", false)
+func (es emplStore) Fire(uID uint, reason string) error {
+	res := es.db.Model(&model.UserRole{}).Where("user_id =? AND is_active = true", uID).Updates(map[string]interface{}{"is_active": false, "reason": reason})
 	if err := getErrorFromResult(res); err != nil {
 		return fmt.Errorf("update user role: %w", err)
 	}

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 	"users-service/adapter/classifier"
 	"users-service/adapter/email"
 	"users-service/adapter/gdrive"
@@ -169,7 +172,7 @@ func main() {
 	ess := info.NewESTBService(conn)
 	ios := info.NewInfoOrderService(conn)
 	ads := info.NewAddressService(aConn)
-	os := order.NewOrderService(oConn, ios)
+	ose := order.NewOrderService(oConn, ios)
 	oss := order.NewOrderStatusService(oConn, ads, ess)
 	imgs := gdrive.NewService()
 	cis := classifier.NewClassifierService(cConn)
@@ -180,9 +183,9 @@ func main() {
 	eUC := handler.NewEMPLUC(es)
 	pUC := handler.NewProductUC(ps)
 	tUC := handler.NewTableUC(ts)
-	estUC := handler.NewESTDuc(ess, ads, os, es)
+	estUC := handler.NewESTDuc(ess, ads, ose, es)
 	kUC := handler.NewKitchenUC(kss, ks)
-	oUC := handler.NewOrderUC(os)
+	oUC := handler.NewOrderUC(ose)
 	osUC := handler.NewOrderStatusUC(oss)
 	deUC := handler.NewAddDeliveryUC(ads)
 	iUC := handler.NewImageUC(imgs)
@@ -201,8 +204,22 @@ func main() {
 	e.GET("/api/v1/", func(c echo.Context) error { return c.String(http.StatusOK, "Hello Api v1") })
 	e.Use(middleware.Logger())
 	r.Start(e)
-	err = e.Start(fmt.Sprintf(":%s", port))
-	if err != nil {
-		log.Fatalf("%v", err)
+	// Start server
+	go func() {
+		err = e.Start(fmt.Sprintf(":%s", port))
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
 	}
 }

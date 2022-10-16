@@ -22,7 +22,7 @@ func NewUserStore() userStore {
 
 func (us userStore) Update(user *model.User) error {
 	user.UpdatedAt = nil
-	res := us.db.Model(user).Select("name", "birth_date", "url", "updated_at").Updates(user)
+	res := us.db.Model(user).Select("name", "birth_date", "url", "updated_at", "nss", "rfc").Updates(user)
 	if err := getErrorFromResult(res); err != nil {
 		return fmt.Errorf("update user: %w", err)
 	}
@@ -40,7 +40,7 @@ func (us userStore) Verify(userID uint) error {
 func (us userStore) Find(id uint) (model.User, error) {
 	user := model.User{}
 	res := us.db.Model(&user).
-		Select("users.id", "users.name", "users.birth_date", "users.url", "users.email", "users.is_verified",
+		Select("users.id", "users.rfc", "users.nss", "users.name", "users.birth_date", "users.url", "users.email", "users.is_verified",
 			"r.role_id, r.establishment_id").
 		Joins("LEFT JOIN user_roles as r ON users.id = r.user_id AND r.is_active = true").
 		Where("users.id = ?", id).

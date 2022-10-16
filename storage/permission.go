@@ -28,7 +28,7 @@ func (js permissionStore) Find(email string) (model.User, error) {
 	user := model.User{}
 	res := js.db.Model(&user).Where("email = ?", email).
 		Select("users.id", "users.is_verified", "r.role_id", "r.establishment_id", "r.is_active").
-		Joins("LEFT JOIN user_roles as r ON r.user_id = users.id").Last(&user)
+		Joins("LEFT JOIN user_roles as r ON r.user_id = users.id").Order("r.is_active DESC").First(&user)
 	if err := getErrorFromResult(res); err != nil {
 		return model.User{}, fmt.Errorf("last user %w", err)
 	}

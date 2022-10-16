@@ -16,7 +16,7 @@ type EMPLStorager interface {
 	SearchWaiters(uint, *model.Search) ([]model.User, error)
 	Search(*model.SearchEMPL) ([]model.User, error)
 	Hire(*model.UserRole) error
-	Fire(uint) error
+	Fire(uint, string) error
 }
 
 type Canner interface {
@@ -219,7 +219,7 @@ func (es employeeService) Fire(from model.UserRole, target uint) error {
 	if err != nil {
 		return err
 	}
-	if err = es.est.Fire(target); err != nil {
+	if err = es.est.Fire(target, from.Reason); err != nil {
 		return pkg.NewAppError("failed to fire the user", err, http.StatusInternalServerError)
 	}
 	return nil

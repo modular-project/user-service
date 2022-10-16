@@ -12,6 +12,7 @@ const (
 	ADMIN
 	MANAGER
 	WAITER
+	CHEF
 )
 
 const (
@@ -39,11 +40,19 @@ type User struct {
 	Name       *string    `json:"name,omitempty"`
 	BirthDate  *time.Time `json:"bdate,omitempty"`
 	IsVerified bool       `json:"is_verified,omitempty" gorm:"not null"`
+	RFC        string     `json:"rfc,omitempty"`
+	NSS        string     `json:"nss,omitempty"`
 
 	RoleID          RoleID `gorm:"<-:false; -:migration" json:"role_id,omitempty"`
 	EstablishmentID uint   `gorm:"<-:false; -:migration" json:"est_id,omitempty"`
 	IsActive        bool   `gorm:"<-:false; -:migration" json:"is_active,omitempty"`
 	Roles           []Role `gorm:"many2many:user_roles;" json:"-"`
+}
+
+type Bonus struct {
+	Start  time.Time
+	End    time.Time
+	Amount float64
 }
 
 type Verification struct {
@@ -66,6 +75,7 @@ type UserRole struct {
 	EstablishmentID uint    `json:"est_id"`
 	IsActive        bool    `json:"is_active"`
 	Salary          float64 `json:"salary"`
+	Reason          string  `json:"reason,omitempty"`
 }
 
 type Kitchen struct {

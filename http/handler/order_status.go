@@ -43,6 +43,14 @@ func (suc OrderStatusUC) PayLocal(c echo.Context) error {
 	if err := c.Bind(&p); err != nil {
 		return pkg.NewAppError("failed to bind pay local request", err, http.StatusBadRequest)
 	}
+	if p.Tip < 0 {
+		p.Tip = 0
+	}
+	if p.Tip > 100 {
+		p.Tip = 100
+	}
+	p.Tip = float32(int(p.Tip*100) / 100)
+	p.Tip = p.Tip / 100
 	uID, err := getUserIDFromContext(c)
 	if err != nil {
 		return err

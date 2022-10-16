@@ -79,7 +79,7 @@ func (uuc UserUC) GetUserData(c echo.Context) error {
 	}
 	m, err := uuc.us.Data(userID)
 	if err != nil {
-		return fmt.Errorf("error at GetUserData: %s", err)
+		return fmt.Errorf("GetUserData: %s", err)
 	}
 	m.Password = ""
 	return c.JSON(http.StatusOK, &m)

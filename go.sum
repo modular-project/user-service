@@ -296,6 +296,10 @@ github.com/modular-project/protobuffers v0.0.0-20221008232133-b3be68957051 h1:L+
 github.com/modular-project/protobuffers v0.0.0-20221008232133-b3be68957051/go.mod h1:A6qBaXQhNp1BNqSqi4IbpNQ17cjdB8qEpYeJKaslnOw=
 github.com/modular-project/protobuffers v0.0.0-20221008232657-e7cb0740589a h1:8FyAefHBTxZVmMA3GcyOhZEUgZjb+DSvJkJEnzwAcxo=
 github.com/modular-project/protobuffers v0.0.0-20221008232657-e7cb0740589a/go.mod h1:A6qBaXQhNp1BNqSqi4IbpNQ17cjdB8qEpYeJKaslnOw=
+github.com/modular-project/protobuffers v0.0.0-20221014155941-cced1198c9b5 h1:caGNKIwQINeTzIoWeMRJGsj5NNn/s1P55UlcdArTXHk=
+github.com/modular-project/protobuffers v0.0.0-20221014155941-cced1198c9b5/go.mod h1:A6qBaXQhNp1BNqSqi4IbpNQ17cjdB8qEpYeJKaslnOw=
+github.com/modular-project/protobuffers v0.0.0-20221015023521-5179e26c51fd h1:WmjovR2SBTlE/IJ2JE8hnltlp7Hk+/QqoP1CXQuplJA=
+github.com/modular-project/protobuffers v0.0.0-20221015023521-5179e26c51fd/go.mod h1:A6qBaXQhNp1BNqSqi4IbpNQ17cjdB8qEpYeJKaslnOw=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

@@ -64,6 +64,7 @@ type OrderServicer interface {
 	GetOrderByWaiterPending(ctx context.Context, wID uint64) (*pf.OrdersResponse, error)
 	AddProductsToOrder(ctx context.Context, in *pf.AddProductsToOrderRequest) (*pf.AddProductsToOrderResponse, float32, error)
 	GetOrderByID(ctx context.Context, id uint64) ([]*pf.OrderProduct, error)
+	GetTips(context.Context, *pf.GetTipsRequest) (float32, error)
 }
 
 type OrderUC struct {
@@ -72,6 +73,37 @@ type OrderUC struct {
 
 func NewOrderUC(os OrderServicer) OrderUC {
 	return OrderUC{os: os}
+}
+
+func (ouc OrderUC) GetTips(c echo.Context) error {
+	var rt pf.GetTipsRequest
+	var eID uint64
+	if err := c.Bind(&rt); err != nil {
+		return pkg.NewAppError("Fail at bind tips request", err, http.StatusBadRequest)
+	}
+	pathID := c.Param("id")
+	if pathID != "" {
+		tID, err := strconv.ParseUint(pathID, 10, 64)
+		if err != nil {
+			return pkg.NewAppError("Fail at convert path param to uint", err, http.StatusBadRequest)
+		}
+		eID = tID
+	} else {
+		tID, err := getUserIDFromContext(c)
+		if err != nil {
+			return err
+		}
+		eID = uint64(tID)
+	}
+	rt.EmployeeId = eID
+	if rt.EmployeeId == 0 {
+		return pkg.NewAppError("Fail at get employee ID", nil, http.StatusBadRequest)
+	}
+	tips, err := ouc.os.GetTips(c.Request().Context(), &rt)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, echo.Map{"tips": tips})
 }
 
 func (ouc OrderUC) CreateLocalOrder(c echo.Context) error {

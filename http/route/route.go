@@ -59,6 +59,8 @@ func (r route) order(e *echo.Echo) {
 	g.POST("/", r.oUC.GetOrders, r.mid.Greater(model.MANAGER, false))
 	g.PATCH("/product/:id", r.osUC.CompleteProduct, r.mid.KitchenLogin)
 	g.PATCH("/product/deliver/", r.osUC.DeliverProducts, r.mid.Equal(model.WAITER, false))
+	g.POST("/waiter/tips/", r.oUC.GetTips, r.mid.Login)
+	g.POST("/waiter/tips/:id", r.oUC.GetTips, r.mid.Greater(model.WAITER, true))
 }
 
 func (r route) deliveryAdd(e *echo.Echo) {

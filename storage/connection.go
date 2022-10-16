@@ -69,6 +69,9 @@ func setRoles() error {
 		}, {
 			Model: model.Model{ID: uint(model.WAITER)},
 			Name:  "Waiter",
+		}, {
+			Model: model.Model{ID: uint(model.CHEF)},
+			Name:  "Chef",
 		},
 	}
 	isRoles := []model.Role{}
@@ -77,8 +80,12 @@ func setRoles() error {
 		return res.Error
 	}
 	if res.RowsAffected != 0 {
+		if res.RowsAffected < 5 {
+			_db.Create(&model.Role{Model: model.Model{ID: uint(model.CHEF)}, Name: "Chef"})
+		}
 		return nil
 	}
+
 	res = _db.CreateInBatches(&roles, len(roles))
 	log.Println("roles was created")
 	return getErrorFromResult(res)

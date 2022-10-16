@@ -115,6 +115,14 @@ func (os orderService) GetOrdersByEstablishment(ctx context.Context, s *pf.Searc
 	return r, nil
 }
 
+func (os orderService) GetTips(c context.Context, r *pf.GetTipsRequest) (float32, error) {
+	tips, err := os.clt.GetTips(c, r)
+	if err != nil {
+		return 0, fmt.Errorf("adapter GetTips: %w", err)
+	}
+	return tips.Tips, nil
+}
+
 func (os orderService) GetOrderByWaiter(ctx context.Context, wID uint64) (*pf.OrdersResponse, error) {
 	r, err := os.clt.GetOrderByWaiter(ctx, &pf.ID{Id: wID})
 	if err != nil {
