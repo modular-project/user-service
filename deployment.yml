@@ -186,6 +186,7 @@ metadata:
   name: user-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: "user-static-ip"
+    kubernetes.io/ingress.allow-http: "false"
 spec:
   tls:
     - secretName: tls-secret
