@@ -92,7 +92,7 @@ jobs:
       run: |-
         kubectl create secret generic tls-secret \
         --from-literal=tls.key='${{secrets.TLS_KEY}}' \
-        --from-literal=tls.cert='${{secrets.TLS_CER}}' \
+        --from-literal=tls.crt='${{secrets.TLS_CER}}' \
         --dry-run=true -o yaml | cat <(cat -) <(echo "type: kubernetes.io/tls") | kubectl apply -f -
         kubectl create secret generic user-secret \
         --from-literal=pwd='${{secrets.DB_PWD}}' \
