@@ -24,7 +24,7 @@ func NewToken() Token {
 // Create return a jwt string to validate sessions
 func (to Token) Create(uid, utp uint) (string, error) {
 	claim := jwt.Options{
-		ExpirationTime: time.Now().Add(150 * time.Minute),
+		ExpirationTime: time.Now().Add(24 * time.Hour),
 		Issuer:         iss,
 		Public:         map[string]interface{}{"uid": uid, "utp": utp},
 	}
